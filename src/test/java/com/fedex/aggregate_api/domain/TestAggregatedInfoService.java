@@ -15,7 +15,7 @@ public class TestAggregatedInfoService {
     void getInfoNoInput() {
         FedexApi fedexApi = new FedexApiClient(WebClient.builder(),"http://localhost");
         AggregatedInfoService service = new AggregatedInfoService(fedexApi);
-        Mono<AggregatedInfo> result = service.getInfo(emptyList(), emptyList(), emptyList());
+        Mono<AggregatedInfo> result = service.getInfo(new AggregatedInfo(emptyList(), emptyList(), emptyList()));
         AggregatedInfo info = result.block();
         assertEquals(emptyMap(),info.pricing);
         assertEquals(emptyMap(),info.track);

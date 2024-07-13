@@ -68,8 +68,10 @@ Note that the test code does not cover all scenario's yet.
 
 ### AS-2: as FedEx, I want service calls to be throttled and bulked into consolidated requests per respective API to prevent services from being overloaded
 
-This is not implemented. It is unclear how to use WebFlux to hold on to a HTTP client request when the requested items
-are less than 5. With DeferredResult I can see a solution but that would mean to rewrite the code for AS-1.
+In progress...
+
+Note that the test code does not cover all scenario's yet.
+
 Note that holding HTTP requests, although using minimal resources, always requires the TCP/ HTTP stack to
 keep the connection alive. This is discouraged from a Reactive perspective. It would not sit well with the
 approach taken with AS-1 where optimal resource usage was a key feature of the solution.

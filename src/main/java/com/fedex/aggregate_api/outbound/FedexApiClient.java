@@ -26,9 +26,6 @@ import static java.util.Collections.emptyList;
 // we cannot use OpenFeign because it does not support non-blocking IO yet
 @Component
 public class FedexApiClient implements FedexApi {
-    private static final int THROTTLING_THRESHOLD = 2;
-    private static final int RETRY_AFTER_SECONDS = 1;
-    private static final int NUMBER_RETRIES = 5;
     private static final Logger logger = LoggerFactory.getLogger(FedexApiClient.class);
     private final ObjectMapper mapper = new ObjectMapper();
     private final String baseUrl;
