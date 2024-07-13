@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 
 import static java.util.Collections.emptyList;
@@ -30,7 +31,7 @@ public class AggregatedInfo {
         this.shipmentsOrderNumbers = shipmentsOrderNumbers;
     }
 
-    // Convenience constructor to create the object with the requestes lists (so NOT with the resulted maps)
+    // Convenience constructor to create the object with the requested lists (so NOT with the resulted maps)
     public AggregatedInfo(AggregatedInfo requestedInfo) {
         this.pricingIso2CountryCodes = requestedInfo.pricingIso2CountryCodes;
         this.trackOrderNumbers = requestedInfo.trackOrderNumbers;
@@ -64,9 +65,21 @@ public class AggregatedInfo {
     }
 
     // we merge the maps; the incoming data takes precedence
-    public void merge(AggregatedInfo successAggregatedInfo) {
-        this.pricing.putAll(successAggregatedInfo.pricing);
-        this.track.putAll(successAggregatedInfo.track);
-        this.shipments.putAll(successAggregatedInfo.shipments);
+    public void merge( AggregatedInfo successAggregatedInfo) {
+        this.pricing.putAll( successAggregatedInfo.pricing);
+        this.track.putAll( successAggregatedInfo.track);
+        this.shipments.putAll( successAggregatedInfo.shipments);
+    }
+
+    // we are using this object as key in a Map so we must define what makes this map unique
+    // the default Java implementation of the three maps together will be the right one
+    @Override
+    public boolean equals(Object o) {
+        return this.hashCode() == o.hashCode();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(pricing.hashCode(), track.hashCode(), shipments.hashCode());
     }
 }
