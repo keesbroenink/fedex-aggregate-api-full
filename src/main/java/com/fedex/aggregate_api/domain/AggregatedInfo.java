@@ -66,20 +66,58 @@ public class AggregatedInfo {
 
     // we merge the maps; the incoming data takes precedence
     public void merge( AggregatedInfo successAggregatedInfo) {
-        this.pricing.putAll( successAggregatedInfo.pricing);
-        this.track.putAll( successAggregatedInfo.track);
-        this.shipments.putAll( successAggregatedInfo.shipments);
+        successAggregatedInfo.pricing.keySet().forEach( isoCountryCode -> {
+            if (pricingIso2CountryCodes.contains(isoCountryCode)) {
+                Double val = successAggregatedInfo.pricing.get(isoCountryCode);
+                if (val != null) {
+                    pricing.put(isoCountryCode, val);
+                }
+            }
+        });
+        successAggregatedInfo.track.keySet().forEach( orderNumber -> {
+            if (trackOrderNumbers.contains(orderNumber)) {
+                String val = successAggregatedInfo.track.get(orderNumber);
+                if (val != null && !val.trim().isEmpty()) {
+                    track.put(orderNumber, val.trim());
+                }
+            }
+        });
+        successAggregatedInfo.shipments.keySet().forEach( orderNumber -> {
+            if (shipmentsOrderNumbers.contains(orderNumber)) {
+                List<String> val = successAggregatedInfo.shipments.get(orderNumber);
+                if (val != null && !val.isEmpty()) {
+                    shipments.put(orderNumber, val);
+                }
+            }
+        });
     }
 
     // we are using this object as key in a Map so we must define what makes this map unique
     // the default Java implementation of the three maps together will be the right one
+
+
     @Override
     public boolean equals(Object o) {
-        return this.hashCode() == o.hashCode();
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        AggregatedInfo that = (AggregatedInfo) o;
+        return Objects.equals(pricingIso2CountryCodes, that.pricingIso2CountryCodes) && Objects.equals(trackOrderNumbers, that.trackOrderNumbers) && Objects.equals(shipmentsOrderNumbers, that.shipmentsOrderNumbers);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(pricing.hashCode(), track.hashCode(), shipments.hashCode());
+        return Objects.hash(pricingIso2CountryCodes, trackOrderNumbers, shipmentsOrderNumbers);
+    }
+
+    @Override
+    public String toString() {
+        return "AggregatedInfo{" +
+                "pricingIso2CountryCodes=" + pricingIso2CountryCodes +
+                ", trackOrderNumbers=" + trackOrderNumbers +
+                ", shipmentsOrderNumbers=" + shipmentsOrderNumbers +
+                ", pricing=" + pricing +
+                ", track=" + track +
+                ", shipments=" + shipments +
+                '}';
     }
 }

@@ -16,7 +16,7 @@ To enable other actuator info you can read Spring Boot documentation for enablin
 
 ### Api swagger (OpenApi 3.0)
 
-http://localhost:8080/webjars/swagger-ui/index.html
+http://localhost:8080/swagger-ui/index.html
 
 For the specification:
 
@@ -68,7 +68,9 @@ Note that the test code does not cover all scenario's yet.
 
 ### AS-2: as FedEx, I want service calls to be throttled and bulked into consolidated requests per respective API to prevent services from being overloaded
 
-In progress...
+This is fully implemented using DeferredResult (Asyn Servlet API). We use a Jetty server (Tomcat had some issues in the past with DeferredResult).
+We are not using Netty with the full WebFlux HTTP handler because that interferes with DeferredResult.
+But for calling the FedEx API services we do use WebFlux/ WebClient non-blocking IO solution.
 
 Note that the test code does not cover all scenario's yet.
 
@@ -83,5 +85,5 @@ and we keep the HTTP channels in good shape.
 
 ### AS-3: as FedEx, I want service calls to be scheduled periodically even if the queue is not full to prevent overly-long response times
 
-This user story should go together with AS-2. It is not acceptable to have web clients waits indefinitely.
+This is fully implemented. This user story should go together with AS-2. It is not acceptable to have web clients waits indefinitely.
 See the previous paragraph for more information on AS-2 which also applies to AS-3.

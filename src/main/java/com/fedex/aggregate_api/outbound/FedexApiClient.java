@@ -80,6 +80,7 @@ public class FedexApiClient implements FedexApi {
                 .onErrorReturn( createEmptyResult( queryList))
                 .map(jsonString -> {
                     try {
+                        logger.debug("received json {}",jsonString);
                         List<GenericInfo> result = new ArrayList<>();
                         Map<String, Object> data = mapper.readValue(jsonString, new TypeReference<Map<String, Object>>() {});
                         data.keySet().forEach( key -> result.add(new GenericInfo(key, data.get(key))));
