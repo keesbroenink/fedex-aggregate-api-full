@@ -15,7 +15,7 @@ import java.util.function.Supplier;
 @Component
 public class FedexApiListener {
     // remember async requests
-    private Map<AggregatedInfo, DeferredResult<AggregatedInfo>> asynContextMap = new ConcurrentHashMap();
+    private final Map<AggregatedInfo, DeferredResult<AggregatedInfo>> asynContextMap = new ConcurrentHashMap();
     private final AggregatedInfoService aggregatedInfoService;
     private final Logger logger = LoggerFactory.getLogger(FedexApiListener.class);
 
@@ -23,7 +23,7 @@ public class FedexApiListener {
         this.aggregatedInfoService = aggregatedInfoService;
     }
 
-    public void addRequest(AggregatedInfo requestedInfo, DeferredResult<AggregatedInfo> waitingRequest, long timeoutSeconds) {
+    public void addRequest(AggregatedInfo requestedInfo, DeferredResult<AggregatedInfo> waitingRequest) {
         asynContextMap.put(requestedInfo, waitingRequest);
         // set out the request and when it finishes we process the results (errors will be handled by returning empty result)
         publishAndProcess( () -> aggregatedInfoService.getInfo(requestedInfo));
@@ -43,7 +43,7 @@ public class FedexApiListener {
                 .publishOn(Schedulers.boundedElastic())
                 .map(it -> blockingAction.get())
                 .subscribe(
-                        val -> process(val),
+                        this::process,
                         err -> logger.error("ERROR: {} ", err.getMessage())
                 );
     }

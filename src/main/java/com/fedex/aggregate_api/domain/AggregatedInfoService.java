@@ -56,7 +56,7 @@ public class AggregatedInfoService {
             shipmentsOrderNumbersCache.drainTo(orderNumbers, minimalRequests);
             shipments = fedexApi.getShipments(orderNumbers);
         }
-        // setup a new AggregatedInfo as output of this function
+        // set up a new AggregatedInfo as output of this function
         AggregatedInfo result = new AggregatedInfo(requestedInfo);
 
         // call in parallel

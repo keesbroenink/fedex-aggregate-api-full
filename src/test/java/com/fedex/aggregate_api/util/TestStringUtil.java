@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestStringUtil {
     @Test
-    void testCommaSeparatedtoList() {
+    void testCommaSeparatedToList() {
         assertEquals( emptyList(), commaSeparatedtoList(null));
         assertEquals( List.of("aap"), commaSeparatedtoList("aap"));
         assertEquals( List.of("aap"), commaSeparatedtoList("aap  ,  aap"));

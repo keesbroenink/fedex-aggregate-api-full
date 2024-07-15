@@ -29,7 +29,7 @@ public class AggregatedInfoDeferredService {
         AggregatedInfo result = new AggregatedInfo(pricingIso2CountryCodes,trackOrderNumbers,shipmentsOrderNumbers);
         DeferredResult<AggregatedInfo> deferredResult = new DeferredResult(timeoutSeconds*1000,
                 () -> fedexApiListener.executeOnTimeout(result));
-        fedexApiListener.addRequest(result, deferredResult, timeoutSeconds);
+        fedexApiListener.addRequest(result, deferredResult);
         return deferredResult; // the HTTP client does not get an answer at this point (waits)
     }
 

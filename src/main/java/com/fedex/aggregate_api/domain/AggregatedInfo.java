@@ -92,7 +92,7 @@ public class AggregatedInfo {
         });
     }
 
-    // we are using this object as key in a Map so we must define what makes this map unique
+    // we are using this object as key in a Map, so we must define what makes this map unique
     // the default Java implementation of the three maps together will be the right one
 
 
