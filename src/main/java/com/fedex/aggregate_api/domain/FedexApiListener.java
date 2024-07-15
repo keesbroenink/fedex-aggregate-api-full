@@ -13,6 +13,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 @Component
+/**
+ * Registers async requests and listens to the async responses. Checks which requests are
+ * waiting for this data and hands them the data. When all requested data is present
+ * the request will be resolved meaning that the HTTP client will receive the response
+ * with all the data.
+ */
 public class FedexApiListener {
     // remember async requests
     private final Map<AggregatedInfo, DeferredResult<AggregatedInfo>> asynContextMap = new ConcurrentHashMap();
