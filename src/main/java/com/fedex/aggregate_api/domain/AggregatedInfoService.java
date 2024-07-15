@@ -9,7 +9,6 @@ import reactor.core.publisher.Mono;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
 
@@ -35,21 +34,21 @@ public class AggregatedInfoService {
                 requestedInfo.trackOrderNumbers,
                 requestedInfo.shipmentsOrderNumbers);
 
-        Mono<List<GenericInfo>> pricing = Mono.just(emptyList());
+        Mono<List<PricingInfo>> pricing = Mono.just(emptyList());
         pricingIso2CountryCodesCache.addAll(requestedInfo.pricingIso2CountryCodes);
         if (pricingIso2CountryCodesCache.size() >= minimalRequests) {
             List<String> isoCountryCodes = new ArrayList<>();
             pricingIso2CountryCodesCache.drainTo(isoCountryCodes, minimalRequests);
             pricing = fedexApi.getPricing(isoCountryCodes);
         }
-        Mono<List<GenericInfo>> trackStatus = Mono.just(emptyList());
+        Mono<List<TrackingInfo>> trackStatus = Mono.just(emptyList());
         trackOrderNumbersCache.addAll(requestedInfo.trackOrderNumbers);
         if (trackOrderNumbersCache.size() >= minimalRequests) {
             List<String> orderNumbers = new ArrayList<>();
             trackOrderNumbersCache.drainTo(orderNumbers, minimalRequests);
-            trackStatus = fedexApi.getTrackStatus(orderNumbers);
+            trackStatus = fedexApi.getTrackingStatus(orderNumbers);
         }
-        Mono<List<GenericInfo>> shipments = Mono.just(emptyList());
+        Mono<List<ShipmentInfo>> shipments = Mono.just(emptyList());
         shipmentsOrderNumbersCache.addAll(requestedInfo.shipmentsOrderNumbers);
         if (shipmentsOrderNumbersCache.size() >= minimalRequests) {
             List<String> orderNumbers = new ArrayList<>();
@@ -63,9 +62,9 @@ public class AggregatedInfoService {
         return Mono
                 .zip( pricing, trackStatus, shipments)
                 .map( data -> {
-                    result.addPricing(data.getT1().stream().map(PricingInfo::new).collect(Collectors.toList()));
-                    result.addTracking(data.getT2().stream().map(TrackingInfo::new).collect(Collectors.toList()));
-                    result.addShipments(data.getT3().stream().map(ShipmentInfo::new).collect(Collectors.toList()));
+                    result.addPricing(data.getT1());
+                    result.addTracking(data.getT2());
+                    result.addShipments(data.getT3());
                     return result;
                 })
                 .block();

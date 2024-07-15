@@ -2,7 +2,7 @@ package com.fedex.aggregate_api.outbound;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fedex.aggregate_api.domain.GenericInfo;
+import com.fedex.aggregate_api.domain.TrackingInfo;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterAll;
@@ -50,10 +50,10 @@ public class TestFedexApiClient {
                         .setBody(getMockedResponse(map))
         );
 
-        Mono<List<GenericInfo>> result = apiClient.getTrackStatus(List.of(orderNumber));
+        Mono<List<TrackingInfo>> result = apiClient.getTrackingStatus(List.of(orderNumber));
         StepVerifier.create(result)
-                .expectNextMatches(genericInfoList -> genericInfoList.getFirst().code.equals(orderNumber)
-                                                   && genericInfoList.getFirst().data.equals(trackingStatus)    )
+                .expectNextMatches(genericInfoList -> genericInfoList.getFirst().orderNumber.equals(orderNumber)
+                                                   && genericInfoList.getFirst().status.equals(trackingStatus)    )
                 .verifyComplete();
     }
 
@@ -69,10 +69,10 @@ public class TestFedexApiClient {
                         .setBody(getMockedResponse(map))
         );
 
-        Mono<List<GenericInfo>> result = apiClient.getTrackStatus(List.of(orderNumber));
+        Mono<List<TrackingInfo>> result = apiClient.getTrackingStatus(List.of(orderNumber));
         StepVerifier.create(result)
-                .expectNextMatches(genericInfoList -> genericInfoList.getFirst().code.equals(orderNumber)
-                                  && genericInfoList.getFirst().data == null    )
+                .expectNextMatches(genericInfoList -> genericInfoList.getFirst().orderNumber.equals(orderNumber)
+                                  && genericInfoList.getFirst().status == null    )
                 .verifyComplete();
     }
     private String getMockedResponse(Map<String,String> data) throws JsonProcessingException {

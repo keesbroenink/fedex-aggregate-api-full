@@ -4,7 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fedex.aggregate_api.domain.FedexApi;
-import com.fedex.aggregate_api.domain.GenericInfo;
+import com.fedex.aggregate_api.domain.PricingInfo;
+import com.fedex.aggregate_api.domain.ShipmentInfo;
+import com.fedex.aggregate_api.domain.TrackingInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.fedex.aggregate_api.util.StringUtil.listToCommaSeparated;
 import static java.util.Collections.emptyList;
@@ -40,20 +43,39 @@ public class FedexApiClient implements FedexApi {
     }
 
     @Override
-    public Mono<List<GenericInfo>> getPricing(List<String> iso2CountryCodes) {
+    public Mono<List<PricingInfo>> getPricing(List<String> iso2CountryCodes) {
         if (iso2CountryCodes.isEmpty()) return Mono.just(emptyList());
+        return getPricingInfo(iso2CountryCodes).flatMap(
+                genericInfoList->Mono.just(genericInfoList.stream()
+                        .map( e->new PricingInfo(e.code, (Double) e.data))
+                        .collect(Collectors.toList())));
+    }
+
+    @Override
+    public Mono<List<TrackingInfo>> getTrackingStatus(List<String> orderNumbers) {
+        if (orderNumbers.isEmpty()) return Mono.just(emptyList());
+        return getTrackingStatusInfo(orderNumbers).flatMap(
+                genericInfoList->Mono.just(genericInfoList.stream()
+                        .map( e->new TrackingInfo(e.code, (String) e.data))
+                        .collect(Collectors.toList())));
+    }
+
+    @Override
+    public Mono<List<ShipmentInfo>> getShipments(List<String> orderNumbers) {
+        if (orderNumbers.isEmpty()) return Mono.just(emptyList());
+        return getShipmentInfo(orderNumbers).flatMap(
+                genericInfoList->Mono.just(genericInfoList.stream()
+                        .map( e->new ShipmentInfo(e.code, (List<String>) e.data))
+                        .collect(Collectors.toList())));
+    }
+
+    private Mono<List<GenericInfo>> getPricingInfo(List<String> iso2CountryCodes) {
         return callApi("pricing", iso2CountryCodes);
     }
-
-    @Override
-    public Mono<List<GenericInfo>> getTrackStatus(List<String> orderNumbers) {
-        if (orderNumbers.isEmpty()) return Mono.just(emptyList());
+    private Mono<List<GenericInfo>> getTrackingStatusInfo(List<String> orderNumbers) {
         return callApi("track", orderNumbers);
     }
-
-    @Override
-    public Mono<List<GenericInfo>> getShipments(List<String> orderNumbers) {
-        if (orderNumbers.isEmpty()) return Mono.just(emptyList());
+    private Mono<List<GenericInfo>> getShipmentInfo(List<String> orderNumbers) {
         return callApi("shipments", orderNumbers);
     }
 

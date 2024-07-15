@@ -7,10 +7,6 @@ public class ShipmentInfo {
         this.orderNumber = orderNumber;
         this.shipments = shipments;
     }
-    public ShipmentInfo(GenericInfo genericInfo) {
-        this.orderNumber = genericInfo.code;
-        this.shipments = (List<String>) genericInfo.data;
-    }
     public final String orderNumber;
     public final List<String> shipments;
 }

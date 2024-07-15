@@ -1,4 +1,4 @@
-package com.fedex.aggregate_api.domain;
+package com.fedex.aggregate_api.outbound;
 
 public class GenericInfo {
     public GenericInfo(String code, Object data) {

@@ -5,9 +5,9 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 public interface FedexApi {
-    Mono<List<GenericInfo>> getPricing(List<String> iso2CountryCodes);
+    Mono<List<PricingInfo>> getPricing(List<String> iso2CountryCodes);
 
-    Mono<List<GenericInfo>> getTrackStatus(List<String> orderNumbers);
+    Mono<List<TrackingInfo>> getTrackingStatus(List<String> orderNumbers);
 
-    Mono<List<GenericInfo>> getShipments(List<String> orderNumbers);
+    Mono<List<ShipmentInfo>> getShipments(List<String> orderNumbers);
 }

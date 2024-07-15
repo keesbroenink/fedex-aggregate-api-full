@@ -36,9 +36,9 @@ public class TestAggregatedInfoService {
     @Test
     void testCacheEnoughRequests() {
         List<String> orderNumbers = List.of("1");
-        Mono<List<GenericInfo>> answer = Mono.just(List.of(new GenericInfo("1","NEW")));
+        Mono<List<TrackingInfo>> answer = Mono.just(List.of(new TrackingInfo("1","NEW")));
         FedexApi fedexApi = mock();
-        given( fedexApi.getTrackStatus(orderNumbers)).willReturn(answer);
+        given( fedexApi.getTrackingStatus(orderNumbers)).willReturn(answer);
         AggregatedInfoService service = new AggregatedInfoService(fedexApi,1);
         AggregatedInfo info = service.getInfo(new AggregatedInfo(emptyList(), orderNumbers, emptyList()));
         assertEquals(emptyMap(),info.pricing);
