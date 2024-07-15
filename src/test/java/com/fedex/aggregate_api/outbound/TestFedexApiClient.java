@@ -3,7 +3,6 @@ package com.fedex.aggregate_api.outbound;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fedex.aggregate_api.domain.GenericInfo;
-import com.fedex.aggregate_api.domain.TrackingInfo;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterAll;
@@ -45,7 +44,6 @@ public class TestFedexApiClient {
         String orderNumber = "123";
         String trackingStatus = "DELIVERED";
         Map<String,String> map = Map.of(orderNumber, trackingStatus);
-        List<GenericInfo> expectedData = List.of(new GenericInfo(orderNumber,new TrackingInfo(orderNumber,trackingStatus)));
         mockWebServer.enqueue(
                 new MockResponse().setResponseCode(HttpStatus.OK.value())
                         .setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
@@ -54,10 +52,29 @@ public class TestFedexApiClient {
 
         Mono<List<GenericInfo>> result = apiClient.getTrackStatus(List.of(orderNumber));
         StepVerifier.create(result)
-                .expectNextMatches(orderNumbers -> orderNumbers.getFirst().code.equals(orderNumber))
+                .expectNextMatches(genericInfoList -> genericInfoList.getFirst().code.equals(orderNumber)
+                                                   && genericInfoList.getFirst().data.equals(trackingStatus)    )
                 .verifyComplete();
     }
 
+    @Test
+    void testErrorResponse()throws JsonProcessingException {
+        apiClient = new FedexApiClient(springWebBuilder,mockWebServer.url("").toString());
+        String orderNumber = "123";
+        String trackingStatus = "DELIVERED";
+        Map<String,String> map = Map.of(orderNumber, trackingStatus);
+        mockWebServer.enqueue(
+                new MockResponse().setResponseCode(HttpStatus.SERVICE_UNAVAILABLE.value())
+                        .setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .setBody(getMockedResponse(map))
+        );
+
+        Mono<List<GenericInfo>> result = apiClient.getTrackStatus(List.of(orderNumber));
+        StepVerifier.create(result)
+                .expectNextMatches(genericInfoList -> genericInfoList.getFirst().code.equals(orderNumber)
+                                  && genericInfoList.getFirst().data == null    )
+                .verifyComplete();
+    }
     private String getMockedResponse(Map<String,String> data) throws JsonProcessingException {
         return mapper.writeValueAsString(data);
     }
