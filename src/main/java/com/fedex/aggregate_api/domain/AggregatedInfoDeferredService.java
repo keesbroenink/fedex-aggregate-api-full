@@ -9,13 +9,13 @@ import org.springframework.web.context.request.async.DeferredResult;
 import java.util.List;
 
 @Service
-public class AggregatedInfoServiceDeferred {
+public class AggregatedInfoDeferredService {
 
-    private final Logger logger = LoggerFactory.getLogger(AggregatedInfoServiceDeferred.class);
+    private final Logger logger = LoggerFactory.getLogger(AggregatedInfoDeferredService.class);
     private final FedexApiListener fedexApiListener;
     private final long timeoutSeconds;
 
-    public AggregatedInfoServiceDeferred(FedexApiListener fedexApiListener,
+    public AggregatedInfoDeferredService(FedexApiListener fedexApiListener,
                                          @Value("${fedexapi.service.timeout.seconds}") long timeoutSeconds) {
         this.fedexApiListener = fedexApiListener;
         this.timeoutSeconds = timeoutSeconds;

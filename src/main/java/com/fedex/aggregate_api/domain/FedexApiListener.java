@@ -30,6 +30,7 @@ public class FedexApiListener {
     }
 
     public AggregatedInfo executeOnTimeout(AggregatedInfo requestedInfo) {
+        logger.debug("executeOnTimeout {}", requestedInfo);
         asynContextMap.remove(requestedInfo); // no need to keep the request
         return aggregatedInfoService.getInfoNoLimit(requestedInfo);
     }

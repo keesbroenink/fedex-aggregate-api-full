@@ -2,7 +2,7 @@ package com.fedex.aggregate_api.inbound;
 
 
 import com.fedex.aggregate_api.domain.AggregatedInfo;
-import com.fedex.aggregate_api.domain.AggregatedInfoServiceDeferred;
+import com.fedex.aggregate_api.domain.AggregatedInfoDeferredService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -14,9 +14,9 @@ import static com.fedex.aggregate_api.util.StringUtil.commaSeparatedtoList;
 @RestController
 @RequestMapping("aggregation")
 public class RestAggregateApi {
-    private final AggregatedInfoServiceDeferred service;
-    public RestAggregateApi(AggregatedInfoServiceDeferred aggregatedInfoServiceDeferred) {
-        this.service = aggregatedInfoServiceDeferred;
+    private final AggregatedInfoDeferredService service;
+    public RestAggregateApi(AggregatedInfoDeferredService aggregatedInfoDeferredService) {
+        this.service = aggregatedInfoDeferredService;
     }
 
     @GetMapping

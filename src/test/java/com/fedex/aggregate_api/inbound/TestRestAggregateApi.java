@@ -2,7 +2,7 @@ package com.fedex.aggregate_api.inbound;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fedex.aggregate_api.domain.AggregatedInfo;
-import com.fedex.aggregate_api.domain.AggregatedInfoServiceDeferred;
+import com.fedex.aggregate_api.domain.AggregatedInfoDeferredService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -28,7 +28,7 @@ public class TestRestAggregateApi {
     MockMvc mvc;
 
     @MockBean
-    AggregatedInfoServiceDeferred infoServiceDeferred;
+    AggregatedInfoDeferredService infoServiceDeferred;
 
     final ObjectMapper mapper = new ObjectMapper();
     @Test
@@ -49,18 +49,14 @@ public class TestRestAggregateApi {
                 .andExpect( content().string( mapper.writeValueAsString(response)));
     }
 
+    void testGetAggregatedInfoOnTimeout() {
+        //TODO
+    }
+
     private DeferredResult<AggregatedInfo> buildMockDeferredResult(AggregatedInfo info) {
         DeferredResult<AggregatedInfo> deferredResult = new DeferredResult<>();
         deferredResult.setResult(info);
         return deferredResult;
     }
 
-    @Test
-    void testGetAggregatedInfoWait() {
-        // client 1 with three requested items: no response
-
-        // client 2 with two requested items will give both clients a response
-
-
-    }
 }
