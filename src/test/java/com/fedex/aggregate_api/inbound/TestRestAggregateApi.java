@@ -25,12 +25,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(RestAggregateApi.class)
 public class TestRestAggregateApi {
     @Autowired
-    private MockMvc mvc;
+    MockMvc mvc;
 
     @MockBean
-    private AggregatedInfoServiceDeferred infoServiceDeferred;
+    AggregatedInfoServiceDeferred infoServiceDeferred;
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    final ObjectMapper mapper = new ObjectMapper();
     @Test
     void testGetAggregatedInfoNoWait() throws Exception {
         // client with five requested items will get a response without waiting
