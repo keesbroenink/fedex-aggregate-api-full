@@ -66,36 +66,23 @@ public class AggregatedInfo {
 
     // we merge the maps; the incoming data takes precedence
     public void merge( AggregatedInfo successAggregatedInfo) {
-        successAggregatedInfo.pricing.keySet().forEach( isoCountryCode -> {
-            if (pricingIso2CountryCodes.contains(isoCountryCode)) {
-                Double val = successAggregatedInfo.pricing.get(isoCountryCode);
+        copyMapIfKeyInList(pricing, successAggregatedInfo.pricing, pricingIso2CountryCodes);
+        copyMapIfKeyInList(track, successAggregatedInfo.track, trackOrderNumbers);
+        copyMapIfKeyInList(shipments, successAggregatedInfo.shipments, shipmentsOrderNumbers);
+    }
+
+    private <V> void copyMapIfKeyInList(Map<String,V> orgMap, Map<String,V> map, List<String> list) {
+        map.keySet().forEach( key -> {
+            if (list.contains(key)) {
+                V val = map.get(key);
                 if (val != null) {
-                    pricing.put(isoCountryCode, val);
-                }
-            }
-        });
-        successAggregatedInfo.track.keySet().forEach( orderNumber -> {
-            if (trackOrderNumbers.contains(orderNumber)) {
-                String val = successAggregatedInfo.track.get(orderNumber);
-                if (val != null && !val.trim().isEmpty()) {
-                    track.put(orderNumber, val.trim());
-                }
-            }
-        });
-        successAggregatedInfo.shipments.keySet().forEach( orderNumber -> {
-            if (shipmentsOrderNumbers.contains(orderNumber)) {
-                List<String> val = successAggregatedInfo.shipments.get(orderNumber);
-                if (val != null && !val.isEmpty()) {
-                    shipments.put(orderNumber, val);
+                    orgMap.put(key, val);
                 }
             }
         });
     }
 
     // we are using this object as key in a Map, so we must define what makes this map unique
-    // the default Java implementation of the three maps together will be the right one
-
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

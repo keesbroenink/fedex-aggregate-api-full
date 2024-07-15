@@ -8,7 +8,9 @@ import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.function.Function;
 
 import static java.util.Collections.emptyList;
 
@@ -34,27 +36,19 @@ public class AggregatedInfoService {
                 requestedInfo.trackOrderNumbers,
                 requestedInfo.shipmentsOrderNumbers);
 
-        Mono<List<PricingInfo>> pricing = Mono.just(emptyList());
-        pricingIso2CountryCodesCache.addAll(requestedInfo.pricingIso2CountryCodes);
-        if (pricingIso2CountryCodesCache.size() >= minimalRequests) {
-            List<String> isoCountryCodes = new ArrayList<>();
-            pricingIso2CountryCodesCache.drainTo(isoCountryCodes, minimalRequests);
-            pricing = fedexApi.getPricing(isoCountryCodes);
-        }
-        Mono<List<TrackingInfo>> trackStatus = Mono.just(emptyList());
-        trackOrderNumbersCache.addAll(requestedInfo.trackOrderNumbers);
-        if (trackOrderNumbersCache.size() >= minimalRequests) {
-            List<String> orderNumbers = new ArrayList<>();
-            trackOrderNumbersCache.drainTo(orderNumbers, minimalRequests);
-            trackStatus = fedexApi.getTrackingStatus(orderNumbers);
-        }
-        Mono<List<ShipmentInfo>> shipments = Mono.just(emptyList());
-        shipmentsOrderNumbersCache.addAll(requestedInfo.shipmentsOrderNumbers);
-        if (shipmentsOrderNumbersCache.size() >= minimalRequests) {
-            List<String> orderNumbers = new ArrayList<>();
-            shipmentsOrderNumbersCache.drainTo(orderNumbers, minimalRequests);
-            shipments = fedexApi.getShipments(orderNumbers);
-        }
+        Mono<List<PricingInfo>> pricing = callOrCache(
+                pricingIso2CountryCodesCache, minimalRequests,
+                requestedInfo.pricingIso2CountryCodes,
+                fedexApi::getPricing);
+        Mono<List<TrackingInfo>> trackStatus = callOrCache(
+                trackOrderNumbersCache, minimalRequests,
+                requestedInfo.trackOrderNumbers,
+                fedexApi::getTrackingStatus);
+        Mono<List<ShipmentInfo>> shipments = callOrCache(
+                shipmentsOrderNumbersCache, minimalRequests,
+                requestedInfo.shipmentsOrderNumbers,
+                fedexApi::getShipments);
+
         // set up a new AggregatedInfo as output of this function
         AggregatedInfo result = new AggregatedInfo(requestedInfo);
 
@@ -69,7 +63,20 @@ public class AggregatedInfoService {
                 })
                 .block();
     }
-
+    // when we have not enough requests we will cache them and return an empty list mono
+    private <T> Mono<List<T>> callOrCache(BlockingQueue<String> cache,
+                                          int minimalRequests,
+                                          List<String> keys,
+                                          Function<List<String>, Mono<List<T>>> theCall) {
+        Mono<List<T>> result = Mono.just(emptyList());
+        cache.addAll(keys);
+        if (cache.size() >= minimalRequests) {
+            List<String> minimalKeys = new ArrayList<>();
+            cache.drainTo(minimalKeys, minimalRequests);
+            result = theCall.apply(minimalKeys);
+        }
+        return result;
+    }
     public AggregatedInfo getInfoNoLimit(AggregatedInfo requestedInfo) {
         return getInfoInternal(requestedInfo, 1);
     }
