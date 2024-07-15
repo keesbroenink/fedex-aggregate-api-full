@@ -19,7 +19,7 @@ public class RestAggregateApi {
         this.service = aggregatedInfoServiceDeferred;
     }
 
-    @GetMapping("/")
+    @GetMapping
     DeferredResult<AggregatedInfo> getAggregatedInfo(
             @RequestParam(required = false) String pricing,
             @RequestParam(required = false) String track,

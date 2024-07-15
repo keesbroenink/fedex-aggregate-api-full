@@ -29,7 +29,7 @@ public class AggregatedInfoService {
         this.minimalRequests = minimalRequests;
     }
     // note that the input AggregatedInfo will not be changed by this method!
-    public AggregatedInfo getInfoInternal(AggregatedInfo requestedInfo, int minimalRequests) {
+    private AggregatedInfo getInfoInternal(AggregatedInfo requestedInfo, int minimalRequests) {
         logger.info("getInfo() pricingIso2CountryCodes {}, trackOrderNumbers {}, shipmentsOrderNumbers {}",
                 requestedInfo.pricingIso2CountryCodes,
                 requestedInfo.trackOrderNumbers,

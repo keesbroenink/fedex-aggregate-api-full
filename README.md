@@ -64,7 +64,6 @@ and the URL's mentioned at the top will work because we mapped port 8080 to 8080
 
 This is fully implemented. You can read the code to see it is solved with the Spring Boot WebFlux framework.
 The three network calls to the FedEx API are execute in parallel and use non-blocking IO for optimal resource usage and speed.
-Note that the test code does not cover all scenario's yet.
 
 ### AS-2: as FedEx, I want service calls to be throttled and bulked into consolidated requests per respective API to prevent services from being overloaded
 
@@ -72,18 +71,16 @@ This is fully implemented using DeferredResult (Asyn Servlet API). We use a Jett
 We are not using Netty with the full WebFlux HTTP handler because that interferes with DeferredResult.
 But for calling the FedEx API services we do use WebFlux/ WebClient non-blocking IO solution.
 
-Note that the test code does not cover all scenario's yet.
-
 Note that holding HTTP requests, although using minimal resources, always requires the TCP/ HTTP stack to
-keep the connection alive. This is discouraged from a Reactive perspective. It would not sit well with the
-approach taken with AS-1 where optimal resource usage was a key feature of the solution.
+keep the connection 'alive'. This is discouraged from a Reactive perspective. 
 To working around a backend that is sensitive for overload we can think of different solutions. The first
 solution that comes in mind is to introduce a datastore that will contain the required info. We could either
 make sure that all updates are also put in the datastore or we could make a background scheduled service to
-keep the datastore close to the latest situation. Our web clients can query the datastore and will always have a quick response
-and we keep the HTTP channels in good shape.
+keep the datastore close to the latest situation. Our web clients can query the datastore and will always have 
+a quick response and we keep the HTTP channels in good shape.
 
 ### AS-3: as FedEx, I want service calls to be scheduled periodically even if the queue is not full to prevent overly-long response times
 
-This is fully implemented. This user story should go together with AS-2. It is not acceptable to have web clients waits indefinitely.
-See the previous paragraph for more information on AS-2 which also applies to AS-3.
+This is fully implemented. This user story should go together with AS-2. It is not acceptable to have web clients 
+waiting indefinitely.
+See the previous paragraph on AS-2 for more information.

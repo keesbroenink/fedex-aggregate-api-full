@@ -20,7 +20,5 @@ public class TestAggregatedInfoService {
         assertEquals(emptyMap(),info.shipments);
     }
 
-    // only pricing
 
-    //
 }

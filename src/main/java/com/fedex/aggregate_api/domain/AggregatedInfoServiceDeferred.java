@@ -15,8 +15,7 @@ public class AggregatedInfoServiceDeferred {
     private final FedexApiListener fedexApiListener;
     private final long timeoutSeconds;
 
-    public AggregatedInfoServiceDeferred(AggregatedInfoService aggregatedInfoService,
-                                         FedexApiListener fedexApiListener,
+    public AggregatedInfoServiceDeferred(FedexApiListener fedexApiListener,
                                          @Value("${fedexapi.service.timeout.seconds}") long timeoutSeconds) {
         this.fedexApiListener = fedexApiListener;
         this.timeoutSeconds = timeoutSeconds;
