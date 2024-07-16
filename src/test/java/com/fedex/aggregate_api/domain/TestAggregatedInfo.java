@@ -13,7 +13,6 @@ public class TestAggregatedInfo {
     ObjectMapper mapper = new ObjectMapper();
     @Test
     void testJsonMapping() throws JsonProcessingException {
-        AggregatedInfo info = new AggregatedInfo();
         Map<String, Double> pricingData = new TreeMap<>();
         pricingData.put("CN", 20.503467806384);
         pricingData.put("NL", 14.242090605778);
@@ -23,9 +22,7 @@ public class TestAggregatedInfo {
         Map<String, String> trackData = new TreeMap<>();
         trackData.put("117347282", "COLLECTING");
         trackData.put("109347263", "NEW");
-        info.pricing = pricingData;
-        info.shipments = shipmentsData;
-        info.track = trackData;
+        AggregatedInfo info = new AggregatedInfo(pricingData, trackData, shipmentsData);
         String expected = "{\"pricing\":{\"CN\":20.503467806384,\"NL\":14.242090605778},\"track\":{\"109347263\":\"NEW\",\"117347282\":\"COLLECTING\"},\"shipments\":{\"109347263\":[\"box\",\"box\"],\"117347282\":[\"box\",\"pallet\"]}}";
         assertEquals(expected, mapper.writeValueAsString(info));
     }

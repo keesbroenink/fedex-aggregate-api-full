@@ -3,6 +3,7 @@ package com.fedex.aggregate_api.inbound;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fedex.aggregate_api.domain.AggregatedInfo;
 import com.fedex.aggregate_api.domain.AggregatedInfoDeferredService;
+import com.fedex.aggregate_api.domain.TrackingInfo;
 import jakarta.servlet.AsyncListener;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +16,6 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.web.context.request.async.DeferredResult;
 
 import java.util.List;
-import java.util.Map;
 
 import static com.fedex.aggregate_api.util.StringUtil.listToCommaSeparated;
 import static java.util.Collections.emptyList;
@@ -39,7 +39,10 @@ public class TestRestAggregateApi {
         // client with five requested items will get a response without waiting
         List<String> orderNumbers = List.of("1","2","3","4","5");
         AggregatedInfo response = new AggregatedInfo(emptyList(), orderNumbers, emptyList());
-        response.track = Map.of("1","NEW", "2","NEW","3","NEW","4","NEW","5","NEW");
+        List<TrackingInfo> tracking = List.of(new TrackingInfo("1","NEW"),
+                new TrackingInfo("2","NEW"),new TrackingInfo("3","NEW"),
+                new TrackingInfo("4","NEW"),new TrackingInfo("5","NEW"));
+        response.addTracking(tracking);
         given( infoServiceDeferred.getInfoDeferred(emptyList(), orderNumbers, emptyList()))
                 .willReturn(buildMockDeferredResult(response));
 
@@ -58,7 +61,10 @@ public class TestRestAggregateApi {
         // client with four requested items will not get a response without waiting
         List<String> orderNumbers = List.of("1","2","3","4");
         AggregatedInfo response = new AggregatedInfo(emptyList(), orderNumbers, emptyList());
-        response.track = Map.of("1","NEW", "2","NEW","3","NEW","4","NEW");
+        List<TrackingInfo> tracking = List.of(new TrackingInfo("1","NEW"),
+                new TrackingInfo("2","NEW"),new TrackingInfo("3","NEW"),
+                new TrackingInfo("4","NEW"));
+        response.addTracking(tracking);
         given( infoServiceDeferred.getInfoDeferred(emptyList(), orderNumbers, emptyList()))
                 .willReturn(buildTimeoutDeferredResult(1, response));
         MvcResult asyncResult = mvc

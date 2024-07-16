@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.web.context.request.async.DeferredResult;
 
 import java.util.List;
-import java.util.Map;
 
 import static java.util.Collections.emptyList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -26,7 +25,10 @@ public class TestAggregateInfoDeferredService {
         setup(2);
         List<String> orderNumbers = List.of("1","2","3","4","5");
         AggregatedInfo answer = new AggregatedInfo(emptyList(),orderNumbers,emptyList());
-        answer.track = Map.of("1","NEW", "2","NEW","3","NEW","4","NEW","5","NEW");
+        List<TrackingInfo> tracking = List.of(new TrackingInfo("1","NEW"),
+                new TrackingInfo("2","NEW"),new TrackingInfo("3","NEW"),
+                new TrackingInfo("4","NEW"),new TrackingInfo("5","NEW"));
+        answer.addTracking(tracking);
         given( infoService.getInfo(answer)).willReturn(answer);
         DeferredResult<AggregatedInfo> response = deferredService.getInfoDeferred(emptyList(), orderNumbers, emptyList());
         Thread.sleep(500);
@@ -38,7 +40,10 @@ public class TestAggregateInfoDeferredService {
         setup(2);
         List<String> orderNumbers = List.of("1","2","3","4","5");
         AggregatedInfo answer = new AggregatedInfo(emptyList(),orderNumbers,emptyList());
-        answer.track = Map.of("1","NEW", "2","NEW","3","NEW","4","NEW");
+        List<TrackingInfo> tracking = List.of(new TrackingInfo("1","NEW"),
+                new TrackingInfo("2","NEW"),new TrackingInfo("3","NEW"),
+                new TrackingInfo("4","NEW"));
+        answer.addTracking(tracking);
         given( infoService.getInfo(answer)).willReturn(answer);
         DeferredResult<AggregatedInfo> response = deferredService.getInfoDeferred(emptyList(), orderNumbers, emptyList());
         Thread.sleep(500);
@@ -51,15 +56,22 @@ public class TestAggregateInfoDeferredService {
         setup(2);
         List<String> orderNumbers = List.of("1","2","3","4","5");
         AggregatedInfo fullAnswer = new AggregatedInfo(emptyList(),orderNumbers,emptyList());
-        fullAnswer.track = Map.of("1","NEW", "2","NEW","3","NEW","4","NEW","5","NEW");
+        List<TrackingInfo> fullTracking = List.of(new TrackingInfo("1","NEW"),
+                new TrackingInfo("2","NEW"),new TrackingInfo("3","NEW"),
+                new TrackingInfo("4","NEW"),new TrackingInfo("5","NEW"));
+        fullAnswer.addTracking(fullTracking);
         AggregatedInfo answer = new AggregatedInfo(emptyList(),orderNumbers,emptyList());
-        answer.track = Map.of("1","NEW", "2","NEW","3","NEW","4","NEW");
+        List<TrackingInfo> tracking = List.of(new TrackingInfo("1","NEW"),
+                new TrackingInfo("2","NEW"),new TrackingInfo("3","NEW"),
+                new TrackingInfo("4","NEW"));
+        answer.addTracking(tracking);
         given( infoService.getInfo(answer)).willReturn(answer);
         DeferredResult<AggregatedInfo> response = deferredService.getInfoDeferred(emptyList(), orderNumbers, emptyList());
         // now complete with the fifth
         List<String> secondOrderNumbers = List.of("5");
         AggregatedInfo secondAnswer = new AggregatedInfo(emptyList(),secondOrderNumbers,emptyList());
-        secondAnswer.track = Map.of("5","NEW");
+        List<TrackingInfo> oneTracking = List.of(new TrackingInfo("5","NEW"));
+        secondAnswer.addTracking(oneTracking);
         given( infoService.getInfo(secondAnswer)).willReturn(secondAnswer);
         DeferredResult<AggregatedInfo> secondResponse = deferredService.getInfoDeferred(emptyList(), secondOrderNumbers, emptyList());
         Thread.sleep(500);

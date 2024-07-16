@@ -2,62 +2,57 @@ package com.fedex.aggregate_api.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.TreeMap;
-
-import static java.util.Collections.emptyList;
+import java.util.*;
 
 /**
  * This class serves as response object for the JSON REST API having three fields with a Map structure.
  * But it also holds the requested data id's (JsonIgnore).
  */
 public class AggregatedInfo {
+    public final Map<String, Double> pricing = new TreeMap();
+    public final Map<String, String> track = new TreeMap();
+    public final Map<String, List<String>> shipments = new TreeMap();
     @JsonIgnore
-    public final List<String> pricingIso2CountryCodes;
+    public final List<String> pricingIso2CountryCodes = new ArrayList();
     @JsonIgnore
-    public final List<String> trackOrderNumbers;
+    public final List<String> trackOrderNumbers = new ArrayList();
     @JsonIgnore
-    public final List<String> shipmentsOrderNumbers;
+    public final List<String> shipmentsOrderNumbers = new ArrayList();
 
     public AggregatedInfo() {
-        this.pricingIso2CountryCodes = emptyList();
-        this.trackOrderNumbers = emptyList();
-        this.shipmentsOrderNumbers = emptyList();
     }
-
+    public AggregatedInfo(Map<String, Double> pricing,
+                          Map<String, String> track,
+                          Map<String, List<String>> shipments) {
+        this.pricing.putAll(pricing);
+        this.track.putAll(track);
+        this.shipments.putAll(shipments);
+    }
     public AggregatedInfo(List<String> pricingIso2CountryCodes,
                           List<String> trackOrderNumbers,
                           List<String> shipmentsOrderNumbers) {
-        this.pricingIso2CountryCodes = pricingIso2CountryCodes;
-        this.trackOrderNumbers = trackOrderNumbers;
-        this.shipmentsOrderNumbers = shipmentsOrderNumbers;
+        this.pricingIso2CountryCodes.addAll(pricingIso2CountryCodes);
+        this.trackOrderNumbers.addAll(trackOrderNumbers);
+        this.shipmentsOrderNumbers.addAll(shipmentsOrderNumbers);
     }
 
     // Convenience constructor to create the object with the requested lists (so NOT with the resulted maps)
     public AggregatedInfo(AggregatedInfo requestedInfo) {
-        this.pricingIso2CountryCodes = requestedInfo.pricingIso2CountryCodes;
-        this.trackOrderNumbers = requestedInfo.trackOrderNumbers;
-        this.shipmentsOrderNumbers = requestedInfo.shipmentsOrderNumbers;
+        this.pricingIso2CountryCodes.addAll(requestedInfo.pricingIso2CountryCodes);
+        this.trackOrderNumbers.addAll(requestedInfo.trackOrderNumbers);
+        this.shipmentsOrderNumbers.addAll(requestedInfo.shipmentsOrderNumbers);
     }
 
-    public Map<String, Double> pricing = new TreeMap();
-    public Map<String, String> track = new TreeMap();
-    public Map<String, List<String>> shipments = new TreeMap();
-
-
-
     public void addPricing(List<PricingInfo> pricingList) {
-        pricingList.forEach(entry -> pricing.put(entry.isoCountryCode, entry.price));
+        pricingList.forEach(entry -> pricing.put(entry.isoCountryCode(), entry.price()));
     }
 
     public void addTracking(List<TrackingInfo> trackingList) {
-        trackingList.forEach(entry -> track.put(entry.orderNumber, entry.status));
+        trackingList.forEach(entry -> track.put(entry.orderNumber(), entry.status()));
     }
 
     public void addShipments(List<ShipmentInfo> shippingList) {
-        shippingList.forEach(entry -> shipments.put(entry.orderNumber, entry.shipments));
+        shippingList.forEach(entry -> shipments.put(entry.orderNumber(), entry.shipments()));
     }
 
 

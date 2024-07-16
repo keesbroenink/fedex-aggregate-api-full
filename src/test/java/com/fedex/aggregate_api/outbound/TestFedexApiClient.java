@@ -52,8 +52,8 @@ public class TestFedexApiClient {
 
         Mono<List<TrackingInfo>> result = apiClient.getTrackingStatus(List.of(orderNumber));
         StepVerifier.create(result)
-                .expectNextMatches(genericInfoList -> genericInfoList.getFirst().orderNumber.equals(orderNumber)
-                                                   && genericInfoList.getFirst().status.equals(trackingStatus)    )
+                .expectNextMatches(genericInfoList -> genericInfoList.getFirst().orderNumber().equals(orderNumber)
+                                                   && genericInfoList.getFirst().status().equals(trackingStatus)    )
                 .verifyComplete();
     }
 
@@ -71,8 +71,8 @@ public class TestFedexApiClient {
 
         Mono<List<TrackingInfo>> result = apiClient.getTrackingStatus(List.of(orderNumber));
         StepVerifier.create(result)
-                .expectNextMatches(genericInfoList -> genericInfoList.getFirst().orderNumber.equals(orderNumber)
-                                  && genericInfoList.getFirst().status == null    )
+                .expectNextMatches(genericInfoList -> genericInfoList.getFirst().orderNumber().equals(orderNumber)
+                                  && genericInfoList.getFirst().status() == null    )
                 .verifyComplete();
     }
     private String getMockedResponse(Map<String,String> data) throws JsonProcessingException {
