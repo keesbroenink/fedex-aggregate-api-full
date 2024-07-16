@@ -14,7 +14,7 @@ import java.util.function.Supplier;
 
 @Component
 /**
- * Registers async requests and listens to the async responses. Checks which requests are
+ * This class remembers async requests and listens to the async responses. It checks which requests are
  * waiting for this data and hands them the data. When all requested data is present
  * the request will be resolved meaning that the HTTP client will receive the response
  * with all the data.
@@ -44,6 +44,9 @@ public class FedexApiListener {
     private Mono<Long> delay() {
         return Mono.delay(Duration.ofMillis(1));
     }
+
+    // We run on a different scheduler than the default one of project Reactor to be able to 'block'
+    // when calling out with WebClient. We call process() when the answer arrives.
     private void publishAndProcess(Supplier<AggregatedInfo> blockingAction)  {
         delay()
                 .publishOn(Schedulers.boundedElastic())

@@ -14,6 +14,11 @@ import java.util.function.Function;
 
 import static java.util.Collections.emptyList;
 
+/**
+ * This service will call out to three different FedEx REST API's in parallel and combine the data.
+ * Note that we only call-out when the specified <code>minimalRequests</code> is reached. If not we will cache
+ * the request id's until we reach the minimal number.
+ */
 @Service
 public class AggregatedInfoService {
     private final Logger logger = LoggerFactory.getLogger(AggregatedInfoService.class);
@@ -63,7 +68,8 @@ public class AggregatedInfoService {
                 })
                 .block();
     }
-    // when we have not enough requests we will cache them and return an empty list mono
+    // when we don't have the minimal number of requests to call-out, we will cache them and
+    // return a mono empty list
     private <T> Mono<List<T>> callOrCache(BlockingQueue<String> cache,
                                           int minimalRequests,
                                           List<String> keys,

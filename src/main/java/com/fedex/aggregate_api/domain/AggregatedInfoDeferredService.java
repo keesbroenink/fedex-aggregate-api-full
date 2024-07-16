@@ -8,6 +8,15 @@ import org.springframework.web.context.request.async.DeferredResult;
 
 import java.util.List;
 
+/**
+ * This service is used by the REST API to provide the requested aggregated FedEx info for pricing,
+ * tracking and shipment. If the HTTP client requests less items than <code>fedexapi.service.minimal.requests</code>
+ * configured in <code>application.properties</code> it will wait until another request (of the same of other client)
+ * will number up to the minimal number.
+ * The HTTP client will wait for a maximum of <code>timeoutSeconds</code>. After that it will
+ * just get the requested data.
+ * This class works together with {@link FedexApiListener} and {@link AggregatedInfoService}.
+ */
 @Service
 public class AggregatedInfoDeferredService {
 

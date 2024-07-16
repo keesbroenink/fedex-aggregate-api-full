@@ -15,7 +15,7 @@ import static org.mockito.Mockito.mock;
 public class TestAggregatedInfoService {
 
     @Test
-    void getInfoNoInput() {
+    void testGetInfoNoInput() {
         FedexApi fedexApi = mock();
         AggregatedInfoService service = new AggregatedInfoService(fedexApi,5);
         AggregatedInfo info = service.getInfo(new AggregatedInfo(emptyList(), emptyList(), emptyList()));
@@ -44,6 +44,5 @@ public class TestAggregatedInfoService {
         assertEquals(emptyMap(),info.pricing);
         assertEquals(emptyMap(),info.shipments);
         assertEquals(Map.of("1","NEW"),info.track);
-
     }
 }

@@ -9,6 +9,10 @@ import java.util.TreeMap;
 
 import static java.util.Collections.emptyList;
 
+/**
+ * This class serves as response object for the JSON REST API having three fields with a Map structure.
+ * But it also holds the requested data id's (JsonIgnore).
+ */
 public class AggregatedInfo {
     @JsonIgnore
     public final List<String> pricingIso2CountryCodes;

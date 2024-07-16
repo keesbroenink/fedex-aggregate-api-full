@@ -69,9 +69,4 @@ public class TestAggregateInfoDeferredService {
         assertEquals(fullAnswer, response.getResult());
     }
 
-    private DeferredResult<AggregatedInfo> buildMockDeferredResult(AggregatedInfo info) {
-        DeferredResult<AggregatedInfo> deferredResult = new DeferredResult<>();
-        deferredResult.setResult(info);
-        return deferredResult;
-    }
 }

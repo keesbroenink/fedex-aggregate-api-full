@@ -55,7 +55,7 @@ public class TestRestAggregateApi {
 
     @Test
     void testGetAggregatedInfoOnTimeout() throws Exception {
-        // client with five requested items will get a response without waiting
+        // client with four requested items will not get a response without waiting
         List<String> orderNumbers = List.of("1","2","3","4");
         AggregatedInfo response = new AggregatedInfo(emptyList(), orderNumbers, emptyList());
         response.track = Map.of("1","NEW", "2","NEW","3","NEW","4","NEW");

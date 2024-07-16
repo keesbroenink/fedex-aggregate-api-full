@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class TestAggregatedInfo {
     ObjectMapper mapper = new ObjectMapper();
     @Test
-    void testAddPricing() throws JsonProcessingException {
+    void testJsonMapping() throws JsonProcessingException {
         AggregatedInfo info = new AggregatedInfo();
         Map<String, Double> pricingData = new TreeMap<>();
         pricingData.put("CN", 20.503467806384);
