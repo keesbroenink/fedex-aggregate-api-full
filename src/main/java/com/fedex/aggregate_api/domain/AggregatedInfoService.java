@@ -13,6 +13,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Function;
 
 import static java.util.Collections.emptyList;
+import static org.apache.commons.lang3.math.NumberUtils.max;
 
 /**
  * This service will call out to three different FedEx REST API's in parallel and combine the data.
@@ -36,7 +37,8 @@ public class AggregatedInfoService {
     }
     // note that the input AggregatedInfo will not be changed by this method!
     private AggregatedInfo getInfoInternal(AggregatedInfo requestedInfo, int minimalRequests) {
-        logger.info("getInfo() pricingIso2CountryCodes {}, trackOrderNumbers {}, shipmentsOrderNumbers {}",
+        logger.info("getInfo() minimalRequests {}, pricingIso2CountryCodes {}, trackOrderNumbers {}, shipmentsOrderNumbers {}",
+                minimalRequests,
                 requestedInfo.pricingIso2CountryCodes,
                 requestedInfo.trackOrderNumbers,
                 requestedInfo.shipmentsOrderNumbers);
@@ -71,20 +73,24 @@ public class AggregatedInfoService {
     // when we don't have the minimal number of requests to call-out, we will cache them and
     // return a mono empty list
     private <T> Mono<List<T>> callOrCache(BlockingQueue<String> cache,
-                                          int minimalRequests,
+                                          final int minimalRequests,
                                           List<String> keys,
                                           Function<List<String>, Mono<List<T>>> theCall) {
         Mono<List<T>> result = Mono.just(emptyList());
         cache.addAll(keys);
         if (cache.size() >= minimalRequests) {
             List<String> minimalKeys = new ArrayList<>();
-            cache.drainTo(minimalKeys, minimalRequests);
+            if (minimalRequests <= 0) {//timeout scenario
+                cache.drainTo(minimalKeys, cache.size());//TODO we could request more than the maximum now
+            } else {
+                cache.drainTo(minimalKeys, minimalRequests);
+            }
             result = theCall.apply(minimalKeys);
         }
         return result;
     }
     public AggregatedInfo getInfoNoLimit(AggregatedInfo requestedInfo) {
-        return getInfoInternal(requestedInfo, 1);
+        return getInfoInternal(requestedInfo, 0);
     }
 
     public AggregatedInfo getInfo(AggregatedInfo requestedInfo) {
