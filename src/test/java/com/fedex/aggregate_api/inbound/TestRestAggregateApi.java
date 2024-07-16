@@ -19,6 +19,7 @@ import java.util.List;
 
 import static com.fedex.aggregate_api.util.StringUtil.listToCommaSeparated;
 import static java.util.Collections.emptyList;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -38,13 +39,12 @@ public class TestRestAggregateApi {
     void testGetAggregatedInfoNoWait() throws Exception {
         // client with five requested items will get a response without waiting
         List<String> orderNumbers = List.of("1","2","3","4","5");
-        AggregatedInfo response = new AggregatedInfo(emptyList(), orderNumbers, emptyList());
+        AggregatedInfo request = new AggregatedInfo(emptyList(), orderNumbers, emptyList());
         List<TrackingInfo> tracking = List.of(new TrackingInfo("1","NEW"),
                 new TrackingInfo("2","NEW"),new TrackingInfo("3","NEW"),
                 new TrackingInfo("4","NEW"),new TrackingInfo("5","NEW"));
-        response.addTracking(tracking);
-        given( infoServiceDeferred.getInfoDeferred(emptyList(), orderNumbers, emptyList()))
-                .willReturn(buildMockDeferredResult(response));
+        request.addTracking(tracking);
+        given( infoServiceDeferred.getInfoDeferred(any())).willReturn(buildMockDeferredResult(request));
 
         MvcResult asyncResult = mvc
                 .perform(
@@ -53,20 +53,19 @@ public class TestRestAggregateApi {
                 .andReturn();
         mvc.perform( asyncDispatch( asyncResult))
                 .andExpect( status().isOk())
-                .andExpect( content().string( mapper.writeValueAsString(response)));
+                .andExpect( content().string( mapper.writeValueAsString(request)));
     }
 
     @Test
     void testGetAggregatedInfoOnTimeout() throws Exception {
         // client with four requested items will not get a response without waiting
         List<String> orderNumbers = List.of("1","2","3","4");
-        AggregatedInfo response = new AggregatedInfo(emptyList(), orderNumbers, emptyList());
+        AggregatedInfo request = new AggregatedInfo(emptyList(), orderNumbers, emptyList());
         List<TrackingInfo> tracking = List.of(new TrackingInfo("1","NEW"),
                 new TrackingInfo("2","NEW"),new TrackingInfo("3","NEW"),
                 new TrackingInfo("4","NEW"));
-        response.addTracking(tracking);
-        given( infoServiceDeferred.getInfoDeferred(emptyList(), orderNumbers, emptyList()))
-                .willReturn(buildTimeoutDeferredResult(1, response));
+        request.addTracking(tracking);
+        given( infoServiceDeferred.getInfoDeferred(any())).willReturn(buildTimeoutDeferredResult(1, request));
         MvcResult asyncResult = mvc
                 .perform(
                         get( "/aggregation?track="+listToCommaSeparated(orderNumbers))
@@ -79,7 +78,7 @@ public class TestRestAggregateApi {
         }
         mvc.perform( asyncDispatch( asyncResult))
                 .andExpect( status().isOk())
-                .andExpect( content().string(mapper.writeValueAsString(response) ));
+                .andExpect( content().string(mapper.writeValueAsString(request) ));
     }
 
     private DeferredResult<AggregatedInfo> buildMockDeferredResult(AggregatedInfo info) {

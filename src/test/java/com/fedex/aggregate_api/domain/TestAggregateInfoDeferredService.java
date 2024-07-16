@@ -1,5 +1,7 @@
 package com.fedex.aggregate_api.domain;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.context.request.async.DeferredResult;
 
@@ -14,6 +16,7 @@ public class TestAggregateInfoDeferredService {
     AggregatedInfoService infoService = mock();
     AggregatedInfoDeferredService deferredService;
     FedexApiListener listener;
+    ObjectMapper mapper = new ObjectMapper();
 
     private void setup(int timeoutSeconds) {
         listener = new FedexApiListener(infoService);
@@ -30,7 +33,7 @@ public class TestAggregateInfoDeferredService {
                 new TrackingInfo("4","NEW"),new TrackingInfo("5","NEW"));
         answer.addTracking(tracking);
         given( infoService.getInfo(answer)).willReturn(answer);
-        DeferredResult<AggregatedInfo> response = deferredService.getInfoDeferred(emptyList(), orderNumbers, emptyList());
+        DeferredResult<AggregatedInfo> response = deferredService.getInfoDeferred(answer);
         Thread.sleep(500);
         AggregatedInfo info = (AggregatedInfo) response.getResult();
         assertEquals(answer, info);
@@ -45,14 +48,14 @@ public class TestAggregateInfoDeferredService {
                 new TrackingInfo("4","NEW"));
         answer.addTracking(tracking);
         given( infoService.getInfo(answer)).willReturn(answer);
-        DeferredResult<AggregatedInfo> response = deferredService.getInfoDeferred(emptyList(), orderNumbers, emptyList());
+        DeferredResult<AggregatedInfo> response = deferredService.getInfoDeferred(answer);
         Thread.sleep(500);
         AggregatedInfo info = (AggregatedInfo) response.getResult();
         assertNull(info); // DeferredResult.setResult is not called because AggregatedInfo track map does not have 5 entries
     }
 
     @Test
-    void testGetAggregatedInfoTwoClientsComplete() throws InterruptedException {
+    void testGetAggregatedInfoTwoClientsComplete() throws InterruptedException, JsonProcessingException {
         setup(2);
         List<String> orderNumbers = List.of("1","2","3","4","5");
         AggregatedInfo fullAnswer = new AggregatedInfo(emptyList(),orderNumbers,emptyList());
@@ -66,19 +69,19 @@ public class TestAggregateInfoDeferredService {
                 new TrackingInfo("4","NEW"));
         answer.addTracking(tracking);
         given( infoService.getInfo(answer)).willReturn(answer);
-        DeferredResult<AggregatedInfo> response = deferredService.getInfoDeferred(emptyList(), orderNumbers, emptyList());
+        DeferredResult<AggregatedInfo> response = deferredService.getInfoDeferred(answer);
         // now complete with the fifth
         List<String> secondOrderNumbers = List.of("5");
         AggregatedInfo secondAnswer = new AggregatedInfo(emptyList(),secondOrderNumbers,emptyList());
         List<TrackingInfo> oneTracking = List.of(new TrackingInfo("5","NEW"));
         secondAnswer.addTracking(oneTracking);
         given( infoService.getInfo(secondAnswer)).willReturn(secondAnswer);
-        DeferredResult<AggregatedInfo> secondResponse = deferredService.getInfoDeferred(emptyList(), secondOrderNumbers, emptyList());
+        DeferredResult<AggregatedInfo> secondResponse = deferredService.getInfoDeferred(secondAnswer);
         Thread.sleep(500);
         AggregatedInfo secondInfo = (AggregatedInfo) secondResponse.getResult();
         assertEquals(secondAnswer, secondInfo);
         // the first client should now have all data
-        assertEquals(fullAnswer, response.getResult());
+        assertEquals(mapper.writeValueAsString(fullAnswer), mapper.writeValueAsString(response.getResult()));
     }
 
 }

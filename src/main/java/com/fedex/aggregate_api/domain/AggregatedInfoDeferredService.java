@@ -6,8 +6,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.async.DeferredResult;
 
-import java.util.List;
-
 /**
  * This service is used by the REST API to provide the requested aggregated FedEx info for pricing,
  * tracking and shipment. If the HTTP client requests less items than <code>fedexapi.service.minimal.requests</code>
@@ -30,15 +28,12 @@ public class AggregatedInfoDeferredService {
         this.timeoutSeconds = timeoutSeconds;
     }
 
-    public DeferredResult<AggregatedInfo> getInfoDeferred(List<String> pricingIso2CountryCodes,
-                                                          List<String> trackOrderNumbers,
-                                                          List<String> shipmentsOrderNumbers) {
+    public DeferredResult<AggregatedInfo> getInfoDeferred(AggregatedInfo requestedInfo) {
         logger.info("getInfoDeferred() with timeout {} seconds for pricingIso2CountryCodes {}, trackOrderNumbers {}, shipmentsOrderNumbers {}",
-                timeoutSeconds, pricingIso2CountryCodes, trackOrderNumbers, shipmentsOrderNumbers);
-        AggregatedInfo result = new AggregatedInfo(pricingIso2CountryCodes,trackOrderNumbers,shipmentsOrderNumbers);
+                timeoutSeconds, requestedInfo.pricingIso2CountryCodes, requestedInfo.trackOrderNumbers, requestedInfo.shipmentsOrderNumbers);
         DeferredResult<AggregatedInfo> deferredResult = new DeferredResult(timeoutSeconds*1000,
-                () -> fedexApiListener.executeOnTimeout(result));
-        fedexApiListener.addRequest(result, deferredResult);
+                () -> fedexApiListener.executeOnTimeout(requestedInfo));
+        fedexApiListener.addRequest(requestedInfo, deferredResult);
         return deferredResult; // the HTTP client does not get an answer at this point (waits)
     }
 

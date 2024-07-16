@@ -24,9 +24,9 @@ public class RestAggregateApi {
             @RequestParam(required = false) String pricing,
             @RequestParam(required = false) String track,
             @RequestParam(required = false) String shipments) {
-        return service.getInfoDeferred(
+        return service.getInfoDeferred(new AggregatedInfo(
                 commaSeparatedtoList(pricing),
                 commaSeparatedtoList(track),
-                commaSeparatedtoList(shipments));
+                commaSeparatedtoList(shipments)));
     }
 }
