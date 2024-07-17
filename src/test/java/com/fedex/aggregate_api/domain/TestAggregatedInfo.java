@@ -5,24 +5,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 public class TestAggregatedInfo {
     ObjectMapper mapper = new ObjectMapper();
     @Test
     void testJsonMapping() throws JsonProcessingException {
-        Map<String, Double> pricingData = new TreeMap<>();
-        pricingData.put("CN", 20.503467806384);
-        pricingData.put("NL", 14.242090605778);
-        Map<String, List<String>> shipmentsData = new TreeMap<>();
-        shipmentsData.put("117347282", List.of("box","pallet"));
-        shipmentsData.put("109347263", List.of("box","box"));
-        Map<String, String> trackData = new TreeMap<>();
-        trackData.put("117347282", "COLLECTING");
-        trackData.put("109347263", "NEW");
-        AggregatedInfo info = new AggregatedInfo(pricingData, trackData, shipmentsData);
+        AggregatedInfo info = new AggregatedInfo();
+        info.addPricing(List.of(new PricingInfo("CN",20.503467806384),
+                        new PricingInfo("NL",14.242090605778)));
+        info.addTracking(List.of(new TrackingInfo("117347282","COLLECTING"),
+                        new TrackingInfo("109347263","NEW")));
+        info.addShipments(List.of(new ShipmentInfo("117347282", List.of("box","pallet")),
+                        new ShipmentInfo("109347263", List.of("box","box"))));
         String expected = "{\"pricing\":{\"CN\":20.503467806384,\"NL\":14.242090605778},\"track\":{\"109347263\":\"NEW\",\"117347282\":\"COLLECTING\"},\"shipments\":{\"109347263\":[\"box\",\"box\"],\"117347282\":[\"box\",\"pallet\"]}}";
         assertEquals(expected, mapper.writeValueAsString(info));
     }

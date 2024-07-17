@@ -13,7 +13,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Function;
 
 import static java.util.Collections.emptyList;
-import static org.apache.commons.lang3.math.NumberUtils.max;
 
 /**
  * This service will call out to three different FedEx REST API's in parallel and combine the data.
@@ -36,25 +35,32 @@ public class AggregatedInfoService {
         this.minimalRequests = minimalRequests;
     }
     // note that the input AggregatedInfo will not be changed by this method!
-    private AggregatedInfo getInfoInternal(AggregatedInfo requestedInfo, int minimalRequests) {
-        logger.info("getInfo() minimalRequests {}, pricingIso2CountryCodes {}, trackOrderNumbers {}, shipmentsOrderNumbers {}",
+    private AggregatedInfo getInfoInternal(AggregatedInfo requestedInfo, boolean ignoreCache) {
+        logger.info("getInfo() minimalRequests {}, ignoreCache {}, pricingIso2CountryCodes {}, trackOrderNumbers {}, shipmentsOrderNumbers {}",
                 minimalRequests,
+                ignoreCache,
                 requestedInfo.pricingIso2CountryCodes,
                 requestedInfo.trackOrderNumbers,
                 requestedInfo.shipmentsOrderNumbers);
 
-        Mono<List<PricingInfo>> pricing = callOrCache(
-                pricingIso2CountryCodesCache, minimalRequests,
-                requestedInfo.pricingIso2CountryCodes,
-                fedexApi::getPricing);
-        Mono<List<TrackingInfo>> trackStatus = callOrCache(
-                trackOrderNumbersCache, minimalRequests,
-                requestedInfo.trackOrderNumbers,
-                fedexApi::getTrackingStatus);
-        Mono<List<ShipmentInfo>> shipments = callOrCache(
-                shipmentsOrderNumbersCache, minimalRequests,
-                requestedInfo.shipmentsOrderNumbers,
-                fedexApi::getShipments);
+        Mono<List<PricingInfo>> pricing = ignoreCache
+                ? callIgnoreCache( requestedInfo.pricingIso2CountryCodes,
+                                   fedexApi::getPricing)
+                : callOrCache( pricingIso2CountryCodesCache,
+                               requestedInfo.pricingIso2CountryCodes,
+                               fedexApi::getPricing);
+        Mono<List<TrackingInfo>> trackStatus = ignoreCache
+                ? callIgnoreCache( requestedInfo.trackOrderNumbers,
+                                   fedexApi::getTrackingStatus)
+                : callOrCache( trackOrderNumbersCache,
+                               requestedInfo.trackOrderNumbers,
+                               fedexApi::getTrackingStatus);
+        Mono<List<ShipmentInfo>> shipments = ignoreCache
+                ? callIgnoreCache( requestedInfo.shipmentsOrderNumbers,
+                                   fedexApi::getShipments)
+                : callOrCache( shipmentsOrderNumbersCache,
+                               requestedInfo.shipmentsOrderNumbers,
+                               fedexApi::getShipments);
 
         // set up a new AggregatedInfo as output of this function
         AggregatedInfo result = new AggregatedInfo(requestedInfo);
@@ -73,27 +79,45 @@ public class AggregatedInfoService {
     // when we don't have the minimal number of requests to call-out, we will cache them and
     // return a mono empty list
     private <T> Mono<List<T>> callOrCache(BlockingQueue<String> cache,
-                                          final int minimalRequests,
                                           List<String> keys,
                                           Function<List<String>, Mono<List<T>>> theCall) {
         Mono<List<T>> result = Mono.just(emptyList());
         cache.addAll(keys);
         if (cache.size() >= minimalRequests) {
             List<String> minimalKeys = new ArrayList<>();
-            if (minimalRequests <= 0) {//timeout scenario
-                cache.drainTo(minimalKeys, cache.size());//TODO we could request more than the maximum now
-            } else {
-                cache.drainTo(minimalKeys, minimalRequests);
-            }
+            cache.drainTo(minimalKeys, minimalRequests);
             result = theCall.apply(minimalKeys);
         }
         return result;
     }
+
+    private <T> Mono<List<T>> callIgnoreCache(List<String> keys,
+                                              Function<List<String>, Mono<List<T>>> theCall) {
+        // chunk the list
+//        List<List<String>> partitions = IntStream.range(0, keys.size())
+//                .filter(i -> i % minimalRequests == 0)
+//                .mapToObj(i -> keys.subList(i, Math.min(i + minimalRequests, keys.size() )))
+//                .collect(Collectors.toList());
+//        if (partitions.size() == 1) {
+//            return theCall.apply(partitions.getFirst());
+//        }
+
+        // todo handle scenario's with multiple chuncks
+
+        return theCall.apply(keys);
+
+
+    }
+
+    private <T> Mono<List<T>> createMono(List<String> keys, Function<List<String>, Mono<List<T>>> theCall) {
+        return Mono.fromCallable(() -> theCall.apply(keys).block());
+    }
+
     public AggregatedInfo getInfoNoLimit(AggregatedInfo requestedInfo) {
-        return getInfoInternal(requestedInfo, 0);
+        return getInfoInternal(requestedInfo, true);
     }
 
     public AggregatedInfo getInfo(AggregatedInfo requestedInfo) {
-        return getInfoInternal(requestedInfo, this.minimalRequests);
+        return getInfoInternal(requestedInfo, false);
     }
 }
