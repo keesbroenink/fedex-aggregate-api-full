@@ -28,7 +28,8 @@ public class TestAggregatedInfoService {
     void testCacheNotEnoughRequests() {
         FedexApi fedexApi = mock();
         AggregatedInfoService service = new AggregatedInfoService(fedexApi,2);
-        AggregatedInfo info = service.getInfo(new AggregatedInfo(List.of("NL"), List.of("1"), List.of("2")));
+        AggregatedInfo info = service.getInfo(new AggregatedInfo(List.of(new CountryCode("NL")),
+                List.of("1"), List.of(new ShipmentOrderNumber("2"))));
         assertEquals(emptyMap(),info.pricing);
         assertEquals(emptyMap(),info.track);
         assertEquals(emptyMap(),info.shipments);

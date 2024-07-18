@@ -18,25 +18,32 @@ public class AggregatedInfo {
     public final Map<String, String> track = new TreeMap<>();
     public final Map<String, List<String>> shipments = new TreeMap<>();
     @JsonIgnore
-    public final List<String> pricingIso2CountryCodes = new CopyOnWriteArrayList<>();
+    public final List<CountryCode> pricingIso2CountryCodes = new CopyOnWriteArrayList<>();
     @JsonIgnore
     public final List<String> trackOrderNumbers = new CopyOnWriteArrayList();
     @JsonIgnore
-    public final List<String> shipmentsOrderNumbers = new CopyOnWriteArrayList();
+    public final List<ShipmentOrderNumber> shipmentsOrderNumbers = new CopyOnWriteArrayList();
 
     public AggregatedInfo() {
     }
 
-    public AggregatedInfo(List<String> pricingIso2CountryCodes,
+    public AggregatedInfo(List<CountryCode> pricingIso2CountryCodes,
                           List<String> trackOrderNumbers,
-                          List<String> shipmentsOrderNumbers) {
+                          List<ShipmentOrderNumber> shipmentsOrderNumbers) {
         this.pricingIso2CountryCodes.addAll(pricingIso2CountryCodes);
         this.trackOrderNumbers.addAll(trackOrderNumbers);
         this.shipmentsOrderNumbers.addAll(shipmentsOrderNumbers);
     }
-
+    @JsonIgnore
+    public List<String> getPricingIso2CountryCodes() {
+        return this.pricingIso2CountryCodes.stream().map(c -> c.code()).toList();
+    }
+    @JsonIgnore
+    public List<String> getShipmentsOrderNumbers() {
+        return this.shipmentsOrderNumbers.stream().map(c -> c.orderNumber()).toList();
+    }
     public synchronized void addPricing(List<PricingInfo> pricingList) {
-        pricingList.forEach(entry -> pricing.put(entry.isoCountryCode(), entry.price()));
+        pricingList.forEach(entry -> pricing.put(entry.isoCountryCode().code(), entry.price()));
     }
 
     public synchronized void addTracking(List<TrackingInfo> trackingList) {
@@ -44,7 +51,7 @@ public class AggregatedInfo {
     }
 
     public synchronized void addShipments(List<ShipmentInfo> shippingList) {
-        shippingList.forEach(entry -> shipments.put(entry.orderNumber(), entry.shipments()));
+        shippingList.forEach(entry -> shipments.put(entry.shipmentOrderNumber().orderNumber(), entry.shipments()));
     }
 
 
@@ -61,13 +68,13 @@ public class AggregatedInfo {
      * @param data
      */
     public AggregatedInfo merge( AggregatedInfo data) {
-        copyMapIfKeyInList(pricing, data.pricing, pricingIso2CountryCodes);
+        copyMapIfKeyInList(pricing, data.pricing, getPricingIso2CountryCodes());
         copyMapIfKeyInList(track, data.track, trackOrderNumbers);
-        copyMapIfKeyInList(shipments, data.shipments, shipmentsOrderNumbers);
+        copyMapIfKeyInList(shipments, data.shipments, getShipmentsOrderNumbers());
         return this;
     }
 
-    private <V> void copyMapIfKeyInList(Map<String,V> orgMap, Map<String,V> map, List<String> list) {
+    private <K,V> void copyMapIfKeyInList(Map<K,V> orgMap, Map<K,V> map, List<K> list) {
         map.keySet().stream().filter(list::contains).forEach(key -> {
             V val = map.get(key);
             orgMap.put(key, val);
@@ -80,17 +87,26 @@ public class AggregatedInfo {
      */
     public AggregatedInfo buildRequestNotResolved() {
         return new AggregatedInfo(
-                buildListIfNoData(this.pricing, new ArrayList(this.pricingIso2CountryCodes)),
-                buildListIfNoData(this.track, new ArrayList(this.trackOrderNumbers)),
-                buildListIfNoData(this.shipments, new ArrayList(this.shipmentsOrderNumbers))
+                buildPricingListIfNoData(this.pricing, getPricingIso2CountryCodes()),
+                buildTrackingListIfNoData(this.track, this.trackOrderNumbers),
+                buildShipmentListIfNoData(this.shipments, getShipmentsOrderNumbers())
         );
     }
-    private <V> List<String> buildListIfNoData(Map<String,V> map, List<String> list) {
+    private List<CountryCode> buildPricingListIfNoData(Map<?,?> map, List<String> list) {
+        List<CountryCode> result = new ArrayList();
+        list.stream().filter(key -> map.get(key) == null).forEach(key->result.add(new CountryCode(key)));
+        return result;
+    }
+    private List<String> buildTrackingListIfNoData(Map<?,?> map, List<String> list) {
         List<String> result = new ArrayList();
         list.stream().filter(key -> map.get(key) == null).forEach(result::add);
         return result;
     }
-
+    private List<ShipmentOrderNumber> buildShipmentListIfNoData(Map<?,?> map, List<String> list) {
+        List<ShipmentOrderNumber> result = new ArrayList();
+        list.stream().filter(key -> map.get(key) == null).forEach(key-> result.add(new ShipmentOrderNumber(key)));
+        return result;
+    }
     public List<List<String>> buildChunks(List<String> keys, int minimalRequests) {
         return IntStream.range(0, keys.size())
                 .filter(i -> i % minimalRequests == 0)

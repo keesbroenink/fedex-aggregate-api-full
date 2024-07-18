@@ -37,7 +37,7 @@ public class AggregatedInfoService {
     }
     // note that the input AggregatedInfo will not be changed by this method!
     private AggregatedInfo getInfoInternal(AggregatedInfo requestedInfo, boolean ignoreCache) {
-        logger.info("getInfo() minimalRequests {}, ignoreCache {}, pricingIso2CountryCodes {}, trackOrderNumbers {}, shipmentsOrderNumbers {}",
+        logger.info("getInfoInternal() minimalRequests {}, ignoreCache {}, pricingIso2CountryCodes {}, trackOrderNumbers {}, shipmentsOrderNumbers {}",
                 minimalRequests,
                 ignoreCache,
                 requestedInfo.pricingIso2CountryCodes,
@@ -45,10 +45,10 @@ public class AggregatedInfoService {
                 requestedInfo.shipmentsOrderNumbers);
 
         Mono<List<PricingInfo>> pricing = ignoreCache
-                ? callIgnoreCache( requestedInfo.pricingIso2CountryCodes,requestedInfo,
+                ? callIgnoreCache( requestedInfo.getPricingIso2CountryCodes(),requestedInfo,
                                    fedexApi::getPricing)
                 : callOrCache( pricingIso2CountryCodesCache,
-                               requestedInfo.pricingIso2CountryCodes,
+                               requestedInfo.getPricingIso2CountryCodes(),
                                fedexApi::getPricing);
         Mono<List<TrackingInfo>> trackStatus = ignoreCache
                 ? callIgnoreCache( requestedInfo.trackOrderNumbers,requestedInfo,
@@ -57,10 +57,10 @@ public class AggregatedInfoService {
                                requestedInfo.trackOrderNumbers,
                                fedexApi::getTrackingStatus);
         Mono<List<ShipmentInfo>> shipments = ignoreCache
-                ? callIgnoreCache( requestedInfo.shipmentsOrderNumbers,requestedInfo,
+                ? callIgnoreCache( requestedInfo.getShipmentsOrderNumbers(),requestedInfo,
                                    fedexApi::getShipments)
                 : callOrCache( shipmentsOrderNumbersCache,
-                               requestedInfo.shipmentsOrderNumbers,
+                               requestedInfo.getShipmentsOrderNumbers(),
                                fedexApi::getShipments);
 
         // set up a new AggregatedInfo as output of this function

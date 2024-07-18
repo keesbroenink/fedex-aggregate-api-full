@@ -3,6 +3,8 @@ package com.fedex.aggregate_api.inbound;
 
 import com.fedex.aggregate_api.domain.AggregatedInfo;
 import com.fedex.aggregate_api.domain.AggregatedInfoDeferredService;
+import com.fedex.aggregate_api.domain.PricingInfo;
+import com.fedex.aggregate_api.domain.ShipmentInfo;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -25,8 +27,8 @@ public class RestAggregateApi {
             @RequestParam(required = false) String track,
             @RequestParam(required = false) String shipments) {
         return service.getInfoDeferred(new AggregatedInfo(
-                commaSeparatedtoList(pricing),
+                PricingInfo.fromListString(commaSeparatedtoList(pricing)),
                 commaSeparatedtoList(track),
-                commaSeparatedtoList(shipments)));
+                ShipmentInfo.fromListString(commaSeparatedtoList(shipments))));
     }
 }
