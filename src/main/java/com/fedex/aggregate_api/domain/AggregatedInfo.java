@@ -70,7 +70,7 @@ public class AggregatedInfo {
     private <V> void copyMapIfKeyInList(Map<String,V> orgMap, Map<String,V> map, List<String> list) {
         map.keySet().stream().filter(list::contains).forEach(key -> {
             V val = map.get(key);
-            if (val != null) orgMap.put(key, val);
+            orgMap.put(key, val);
         });
     }
 

@@ -39,8 +39,10 @@ public class FedexApiListener {
         logger.debug("executeOnTimeout {}", requestedInfo);
         asynContextMap.remove(requestedInfo); // no need to keep the request in the admin
         // small optimization; we could already have some data
-        return requestedInfo.merge(
+        AggregatedInfo result = requestedInfo.merge(
             aggregatedInfoService.getInfoNoLimit( requestedInfo.buildRequestNotResolved()));
+        logger.info("after timeout all data received for {}",result);
+        return result;
     }
 
     private Mono<Long> delay() {
