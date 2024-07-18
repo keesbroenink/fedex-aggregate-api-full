@@ -5,17 +5,18 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.TreeMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.IntStream;
 
 /**
  * This class serves as response object for the JSON REST API having three fields with a Map structure.
  * But it also holds the requested data id's (JsonIgnore).
  */
 public class AggregatedInfo {
-    public final Map<String, Double> pricing = new ConcurrentSkipListMap<>();
-    public final Map<String, String> track = new ConcurrentSkipListMap<>();
-    public final Map<String, List<String>> shipments = new ConcurrentSkipListMap<>();
+    public final Map<String, Double> pricing = new TreeMap<>();//not threadsafe
+    public final Map<String, String> track = new TreeMap<>();
+    public final Map<String, List<String>> shipments = new TreeMap<>();
     @JsonIgnore
     public final List<String> pricingIso2CountryCodes = new CopyOnWriteArrayList<>();
     @JsonIgnore
@@ -34,29 +35,15 @@ public class AggregatedInfo {
         this.shipmentsOrderNumbers.addAll(shipmentsOrderNumbers);
     }
 
-    /**
-     * onvenience constructor to create the object with the requested lists (so NOT with the resulted maps).
-     * Note that we only add the request-id if it is not already present.
-      */
-    public AggregatedInfo(AggregatedInfo requestedInfo) {
-        addAllUnique(this.pricingIso2CountryCodes, requestedInfo.pricingIso2CountryCodes);
-        addAllUnique(this.trackOrderNumbers, requestedInfo.trackOrderNumbers);
-        addAllUnique(this.shipmentsOrderNumbers, requestedInfo.shipmentsOrderNumbers);
-    }
-
-    private void addAllUnique(List<String> list, List<String> newList) {
-        newList.stream().filter(e -> !list.contains(e)).forEach(list::add);
-    }
-
-    public void addPricing(List<PricingInfo> pricingList) {
+    public synchronized void addPricing(List<PricingInfo> pricingList) {
         pricingList.forEach(entry -> pricing.put(entry.isoCountryCode(), entry.price()));
     }
 
-    public void addTracking(List<TrackingInfo> trackingList) {
+    public synchronized void addTracking(List<TrackingInfo> trackingList) {
         trackingList.forEach(entry -> track.put(entry.orderNumber(), entry.status()));
     }
 
-    public void addShipments(List<ShipmentInfo> shippingList) {
+    public synchronized void addShipments(List<ShipmentInfo> shippingList) {
         shippingList.forEach(entry -> shipments.put(entry.orderNumber(), entry.shipments()));
     }
 
@@ -73,10 +60,11 @@ public class AggregatedInfo {
      * that is also in the original.
      * @param data
      */
-    public void merge( AggregatedInfo data) {
+    public AggregatedInfo merge( AggregatedInfo data) {
         copyMapIfKeyInList(pricing, data.pricing, pricingIso2CountryCodes);
         copyMapIfKeyInList(track, data.track, trackOrderNumbers);
         copyMapIfKeyInList(shipments, data.shipments, shipmentsOrderNumbers);
+        return this;
     }
 
     private <V> void copyMapIfKeyInList(Map<String,V> orgMap, Map<String,V> map, List<String> list) {
@@ -101,6 +89,13 @@ public class AggregatedInfo {
         List<String> result = new ArrayList();
         list.stream().filter(key -> map.get(key) == null).forEach(result::add);
         return result;
+    }
+
+    public List<List<String>> buildChunks(List<String> keys, int minimalRequests) {
+        return IntStream.range(0, keys.size())
+                .filter(i -> i % minimalRequests == 0)
+                .mapToObj(i -> keys.subList(i, Math.min(i + minimalRequests, keys.size())))
+                .toList();
     }
 
     // we are using this object as key in a Map, so we must define what makes this map unique

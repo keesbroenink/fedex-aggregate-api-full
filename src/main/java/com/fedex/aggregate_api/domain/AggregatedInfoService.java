@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -44,26 +45,27 @@ public class AggregatedInfoService {
                 requestedInfo.shipmentsOrderNumbers);
 
         Mono<List<PricingInfo>> pricing = ignoreCache
-                ? callIgnoreCache( requestedInfo.pricingIso2CountryCodes,
+                ? callIgnoreCache( requestedInfo.pricingIso2CountryCodes,requestedInfo,
                                    fedexApi::getPricing)
                 : callOrCache( pricingIso2CountryCodesCache,
                                requestedInfo.pricingIso2CountryCodes,
                                fedexApi::getPricing);
         Mono<List<TrackingInfo>> trackStatus = ignoreCache
-                ? callIgnoreCache( requestedInfo.trackOrderNumbers,
+                ? callIgnoreCache( requestedInfo.trackOrderNumbers,requestedInfo,
                                    fedexApi::getTrackingStatus)
                 : callOrCache( trackOrderNumbersCache,
                                requestedInfo.trackOrderNumbers,
                                fedexApi::getTrackingStatus);
         Mono<List<ShipmentInfo>> shipments = ignoreCache
-                ? callIgnoreCache( requestedInfo.shipmentsOrderNumbers,
+                ? callIgnoreCache( requestedInfo.shipmentsOrderNumbers,requestedInfo,
                                    fedexApi::getShipments)
                 : callOrCache( shipmentsOrderNumbersCache,
                                requestedInfo.shipmentsOrderNumbers,
                                fedexApi::getShipments);
 
         // set up a new AggregatedInfo as output of this function
-        AggregatedInfo result = new AggregatedInfo(requestedInfo);
+        AggregatedInfo result = new AggregatedInfo(requestedInfo.pricingIso2CountryCodes,
+                requestedInfo.trackOrderNumbers, requestedInfo.shipmentsOrderNumbers);
 
         // call in parallel
         return Mono
@@ -76,6 +78,7 @@ public class AggregatedInfoService {
                 })
                 .block();
     }
+
     // when we don't have the minimal number of requests to call-out, we will cache them and
     // return a mono empty list
     private <T> Mono<List<T>> callOrCache(BlockingQueue<String> cache,
@@ -91,28 +94,33 @@ public class AggregatedInfoService {
         return result;
     }
 
-    private <T> Mono<List<T>> callIgnoreCache(List<String> keys,
+    private <T> Mono<List<T>> callIgnoreCache(List<String> keys, AggregatedInfo requestInfo,
                                               Function<List<String>, Mono<List<T>>> theCall) {
         // chunk the list
-//        List<List<String>> partitions = IntStream.range(0, keys.size())
-//                .filter(i -> i % minimalRequests == 0)
-//                .mapToObj(i -> keys.subList(i, Math.min(i + minimalRequests, keys.size() )))
-//                .collect(Collectors.toList());
-//        if (partitions.size() == 1) {
-//            return theCall.apply(partitions.getFirst());
-//        }
+        if (keys.size() == 0) return Mono.just(emptyList());
 
-        // todo handle scenario's with multiple chuncks
-
-        return theCall.apply(keys);
-
-
+        List<List<String>> chunks = requestInfo.buildChunks(keys, minimalRequests);
+        if (chunks.size() == 1) {
+            return theCall.apply(keys);
+        }
+        List<T> result = new ArrayList<>();
+        return Mono
+                .zip( theCall.apply(getChunk(0, chunks)), theCall.apply(getChunk(1, chunks)),
+                      theCall.apply(getChunk(2, chunks)), theCall.apply(getChunk(3, chunks)),
+                      theCall.apply(getChunk(4, chunks)), theCall.apply(getChunk(5, chunks)),
+                      theCall.apply(getChunk(6, chunks)), theCall.apply(getChunk(7, chunks))
+                )
+                .map(data -> {
+                    for (int i = 0; i < chunks.size(); i++) {
+                        result.addAll((Collection<? extends T>) data.get(i));
+                    }
+                    return result;
+                });
     }
-
-    private <T> Mono<List<T>> createMono(List<String> keys, Function<List<String>, Mono<List<T>>> theCall) {
-        return Mono.fromCallable(() -> theCall.apply(keys).block());
+    private List<String> getChunk(int index, List<List<String>> chunks) {
+        if (index >= chunks.size()) return emptyList();
+        return chunks.get(index);
     }
-
     public AggregatedInfo getInfoNoLimit(AggregatedInfo requestedInfo) {
         return getInfoInternal(requestedInfo, true);
     }
