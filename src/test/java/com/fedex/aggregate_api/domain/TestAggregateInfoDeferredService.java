@@ -53,7 +53,7 @@ public class TestAggregateInfoDeferredService {
                 new TrackingInfo(trackingOrderNumbers.get(1),"DELIVERED"),
                 new TrackingInfo(trackingOrderNumbers.get(2),"DELIVERED"),
                 new TrackingInfo(trackingOrderNumbers.get(3),"DELIVERED"));
-        answer.addTracking(tracking);
+        answer.addTrackingAlways(tracking);
         given( infoService.getInfo(answer)).willReturn(answer);
         DeferredResult<AggregatedInfo> response = deferredService.getInfoDeferred(answer);
         Thread.sleep(500);
