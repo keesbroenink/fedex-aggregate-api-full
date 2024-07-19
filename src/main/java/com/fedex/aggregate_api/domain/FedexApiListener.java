@@ -78,7 +78,7 @@ public class FedexApiListener {
                 // remove from the map
                 asynContextMap.remove(requestedInfo);
             } else {
-                logger.info("data received but still not all for {}",requestedInfo);
+                logger.info("data received {} but still not all for {}",successAggregatedInfo,requestedInfo);
             }
         });
     }

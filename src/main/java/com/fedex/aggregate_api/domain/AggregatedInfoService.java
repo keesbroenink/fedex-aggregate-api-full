@@ -71,9 +71,9 @@ public class AggregatedInfoService {
         return Mono
                 .zip( pricing, trackStatus, shipments)
                 .map( data -> {
-                    result.addPricing(data.getT1());
-                    result.addTracking(data.getT2());
-                    result.addShipments(data.getT3());
+                    result.addPricingAlways(data.getT1());
+                    result.addTrackingAlways(data.getT2());
+                    result.addShipmentsAlways(data.getT3());
                     return result;
                 })
                 .block();
@@ -99,7 +99,7 @@ public class AggregatedInfoService {
         // chunk the list
         if (keys.size() == 0) return Mono.just(emptyList());
 
-        List<List<String>> chunks = requestInfo.buildChunks(keys, minimalRequests);
+        List<List<String>> chunks = AggregatedInfo.buildChunks(keys, minimalRequests);
         if (chunks.size() == 1) {
             return theCall.apply(keys);
         }

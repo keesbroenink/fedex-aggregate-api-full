@@ -47,18 +47,33 @@ public class AggregatedInfo {
         return this.shipmentsOrderNumbers.stream().map(c -> c.orderNumber()).toList();
     }
     public synchronized void addPricing(List<PricingInfo> pricingList) {
+        addPricingIfKeyInList(pricingList);
+    }
+    public synchronized void addPricingAlways(List<PricingInfo> pricingList) {
         pricingList.forEach(entry -> pricing.put(entry.isoCountryCode().code(), entry.price()));
     }
-
     public synchronized void addTracking(List<TrackingInfo> trackingList) {
+        addTrackingIfKeyInList(trackingList);
+    }
+    public synchronized void addTrackingAlways(List<TrackingInfo> trackingList) {
         trackingList.forEach(entry -> track.put(entry.trackingOrderNumber().orderNumber(), entry.status()));
     }
 
     public synchronized void addShipments(List<ShipmentInfo> shippingList) {
+        addShipmentIfKeyInList(shippingList);
+    }
+    public synchronized void addShipmentsAlways(List<ShipmentInfo> shippingList) {
         shippingList.forEach(entry -> shipments.put(entry.shipmentOrderNumber().orderNumber(), entry.shipments()));
     }
-
-
+    private void addPricingIfKeyInList(List<PricingInfo> orgList) {
+        orgList.stream().filter(e-> pricingIso2CountryCodes.contains(e.isoCountryCode())).forEach(entry -> pricing.put(entry.isoCountryCode().code(), entry.price()));
+    }
+    private void addTrackingIfKeyInList(List<TrackingInfo> orgList) {
+        orgList.stream().filter(e-> trackOrderNumbers.contains(e.trackingOrderNumber())).forEach(entry -> track.put(entry.trackingOrderNumber().orderNumber(), entry.status()));
+    }
+    private void addShipmentIfKeyInList(List<ShipmentInfo> orgList) {
+        orgList.stream().filter(e-> shipmentsOrderNumbers.contains(e.shipmentOrderNumber())).forEach(entry -> shipments.put(entry.shipmentOrderNumber().orderNumber(), entry.shipments()));
+    }
     @JsonIgnore
     public boolean isComplete() {
         return pricing.keySet().size() == pricingIso2CountryCodes.size() &&
@@ -98,7 +113,7 @@ public class AggregatedInfo {
     }
     private List<CountryCode> buildPricingListIfNoData(Map<?,?> map, List<String> list) {
         List<CountryCode> result = new ArrayList();
-        list.stream().filter(key -> map.get(key) == null).forEach(key->result.add(new CountryCode(key)));
+        list.stream().filter(key -> !map.containsKey(key)).forEach(key->result.add(new CountryCode(key)));
         return result;
     }
     private List<TrackingOrderNumber> buildTrackingListIfNoData(Map<?,?> map, List<String> list) {
@@ -111,10 +126,10 @@ public class AggregatedInfo {
         list.stream().filter(key -> map.get(key) == null).forEach(key-> result.add(new ShipmentOrderNumber(key)));
         return result;
     }
-    public List<List<String>> buildChunks(List<String> keys, int minimalRequests) {
+    public static List<List<String>> buildChunks(List<String> keys, int chunkSize) {
         return IntStream.range(0, keys.size())
-                .filter(i -> i % minimalRequests == 0)
-                .mapToObj(i -> keys.subList(i, Math.min(i + minimalRequests, keys.size())))
+                .filter(i -> i % chunkSize == 0)
+                .mapToObj(i -> keys.subList(i, Math.min(i + chunkSize, keys.size())))
                 .toList();
     }
 
