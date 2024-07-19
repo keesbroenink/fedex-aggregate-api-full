@@ -29,7 +29,7 @@ public class TestAggregatedInfoService {
         FedexApi fedexApi = mock();
         AggregatedInfoService service = new AggregatedInfoService(fedexApi,2);
         AggregatedInfo info = service.getInfo(new AggregatedInfo(List.of(new CountryCode("NL")),
-                List.of("1"), List.of(new ShipmentOrderNumber("2"))));
+                List.of(new TrackingOrderNumber("1")), List.of(new ShipmentOrderNumber("2"))));
         assertEquals(emptyMap(),info.pricing);
         assertEquals(emptyMap(),info.track);
         assertEquals(emptyMap(),info.shipments);
@@ -37,11 +37,12 @@ public class TestAggregatedInfoService {
     @Test
     void testCacheEnoughRequests() {
         List<String> orderNumbers = List.of("1");
-        Mono<List<TrackingInfo>> answer = Mono.just(List.of(new TrackingInfo("1","NEW")));
+        List<TrackingOrderNumber> trackingOrderNumbers = TrackingInfo.fromListString(orderNumbers);
+        Mono<List<TrackingInfo>> answer = Mono.just(List.of(new TrackingInfo(new TrackingOrderNumber("1"),"NEW")));
         FedexApi fedexApi = mock();
         given( fedexApi.getTrackingStatus(orderNumbers)).willReturn(answer);
         AggregatedInfoService service = new AggregatedInfoService(fedexApi,1);
-        AggregatedInfo info = service.getInfo(new AggregatedInfo(emptyList(), orderNumbers, emptyList()));
+        AggregatedInfo info = service.getInfo(new AggregatedInfo(emptyList(), trackingOrderNumbers, emptyList()));
         assertEquals(emptyMap(),info.pricing);
         assertEquals(emptyMap(),info.shipments);
         assertEquals(Map.of("1","NEW"),info.track);

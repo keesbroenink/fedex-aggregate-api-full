@@ -51,10 +51,10 @@ public class AggregatedInfoService {
                                requestedInfo.getPricingIso2CountryCodes(),
                                fedexApi::getPricing);
         Mono<List<TrackingInfo>> trackStatus = ignoreCache
-                ? callIgnoreCache( requestedInfo.trackOrderNumbers,requestedInfo,
+                ? callIgnoreCache( requestedInfo.getTrackingOrderNumbers(),requestedInfo,
                                    fedexApi::getTrackingStatus)
                 : callOrCache( trackOrderNumbersCache,
-                               requestedInfo.trackOrderNumbers,
+                               requestedInfo.getTrackingOrderNumbers(),
                                fedexApi::getTrackingStatus);
         Mono<List<ShipmentInfo>> shipments = ignoreCache
                 ? callIgnoreCache( requestedInfo.getShipmentsOrderNumbers(),requestedInfo,

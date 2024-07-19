@@ -1,4 +1,9 @@
 package com.fedex.aggregate_api.domain;
 
-public record TrackingInfo(String orderNumber, String status) {
+import java.util.List;
+
+public record TrackingInfo(TrackingOrderNumber trackingOrderNumber, String status) {
+    public static List<TrackingOrderNumber> fromListString(List<String> listString) {
+        return listString.stream().map(s -> new TrackingOrderNumber(s)).toList();
+    }
 }

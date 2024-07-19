@@ -53,7 +53,7 @@ public class FedexApiClient implements FedexApi {
         if (orderNumbers.isEmpty()) return Mono.just(emptyList());
         return getTrackingStatusInfo(orderNumbers).flatMap(
                 genericInfoList->Mono.just(genericInfoList.stream()
-                        .map( e->new TrackingInfo(e.code, (String) e.data))
+                        .map( e->new TrackingInfo(new TrackingOrderNumber(e.code), (String) e.data))
                         .collect(Collectors.toList())));
     }
 

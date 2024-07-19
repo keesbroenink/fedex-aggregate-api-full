@@ -27,10 +27,14 @@ public class TestAggregateInfoDeferredService {
     void testGetAggregatedInfoNoWait() throws InterruptedException {
         setup(2);
         List<String> orderNumbers = List.of("1","2","3","4","5");
-        AggregatedInfo answer = new AggregatedInfo(emptyList(),orderNumbers,emptyList());
-        List<TrackingInfo> tracking = List.of(new TrackingInfo("1","NEW"),
-                new TrackingInfo("2","NEW"),new TrackingInfo("3","NEW"),
-                new TrackingInfo("4","NEW"),new TrackingInfo("5","NEW"));
+        List<TrackingOrderNumber> trackingOrderNumbers = TrackingInfo.fromListString(orderNumbers);
+        AggregatedInfo answer = new AggregatedInfo(emptyList(),trackingOrderNumbers,emptyList());
+        List<TrackingInfo> tracking = List.of(
+                new TrackingInfo(trackingOrderNumbers.get(0),"NEW"),
+                new TrackingInfo(trackingOrderNumbers.get(1),"NEW"),
+                new TrackingInfo(trackingOrderNumbers.get(2),"NEW"),
+                new TrackingInfo(trackingOrderNumbers.get(3),"NEW"),
+                new TrackingInfo(trackingOrderNumbers.get(4),"NEW"));
         answer.addTracking(tracking);
         given( infoService.getInfo(answer)).willReturn(answer);
         DeferredResult<AggregatedInfo> response = deferredService.getInfoDeferred(answer);
@@ -42,10 +46,13 @@ public class TestAggregateInfoDeferredService {
     void testGetAggregatedInfoWait() throws InterruptedException {
         setup(2);
         List<String> orderNumbers = List.of("1","2","3","4","5");
-        AggregatedInfo answer = new AggregatedInfo(emptyList(),orderNumbers,emptyList());
-        List<TrackingInfo> tracking = List.of(new TrackingInfo("1","NEW"),
-                new TrackingInfo("2","NEW"),new TrackingInfo("3","NEW"),
-                new TrackingInfo("4","NEW"));
+        List<TrackingOrderNumber> trackingOrderNumbers = TrackingInfo.fromListString(orderNumbers);
+        AggregatedInfo answer = new AggregatedInfo(emptyList(),trackingOrderNumbers,emptyList());
+        List<TrackingInfo> tracking = List.of(
+                new TrackingInfo(trackingOrderNumbers.get(0),"DELIVERED"),
+                new TrackingInfo(trackingOrderNumbers.get(1),"DELIVERED"),
+                new TrackingInfo(trackingOrderNumbers.get(2),"DELIVERED"),
+                new TrackingInfo(trackingOrderNumbers.get(3),"DELIVERED"));
         answer.addTracking(tracking);
         given( infoService.getInfo(answer)).willReturn(answer);
         DeferredResult<AggregatedInfo> response = deferredService.getInfoDeferred(answer);
@@ -57,31 +64,40 @@ public class TestAggregateInfoDeferredService {
     @Test
     void testGetAggregatedInfoTwoClientsComplete() throws InterruptedException, JsonProcessingException {
         setup(2);
+
         List<String> orderNumbers = List.of("1","2","3","4","5");
-        AggregatedInfo fullAnswer = new AggregatedInfo(emptyList(),orderNumbers,emptyList());
-        List<TrackingInfo> fullTracking = List.of(new TrackingInfo("1","NEW"),
-                new TrackingInfo("2","NEW"),new TrackingInfo("3","NEW"),
-                new TrackingInfo("4","NEW"),new TrackingInfo("5","NEW"));
+        List<TrackingOrderNumber> fullTrackingOrderNumbers = TrackingInfo.fromListString(orderNumbers);
+        AggregatedInfo fullAnswer = new AggregatedInfo(emptyList(),fullTrackingOrderNumbers,emptyList());
+        List<TrackingInfo> fullTracking = List.of(
+                new TrackingInfo(fullTrackingOrderNumbers.get(0),"WAITING"),
+                new TrackingInfo(fullTrackingOrderNumbers.get(1),"WAITING"),
+                new TrackingInfo(fullTrackingOrderNumbers.get(2),"WAITING"),
+                new TrackingInfo(fullTrackingOrderNumbers.get(3),"WAITING"),
+                new TrackingInfo(fullTrackingOrderNumbers.get(4),"WAITING"));
         fullAnswer.addTracking(fullTracking);
-        AggregatedInfo answer = new AggregatedInfo(emptyList(),orderNumbers,emptyList());
-        List<TrackingInfo> tracking = List.of(new TrackingInfo("1","NEW"),
-                new TrackingInfo("2","NEW"),new TrackingInfo("3","NEW"),
-                new TrackingInfo("4","NEW"));
+        // now ask for 5 and return 4
+        AggregatedInfo answer = new AggregatedInfo(emptyList(),fullTrackingOrderNumbers,emptyList());
+        List<TrackingInfo> tracking = List.of(
+                new TrackingInfo(fullTrackingOrderNumbers.get(0),"WAITING"),
+                new TrackingInfo(fullTrackingOrderNumbers.get(1),"WAITING"),
+                new TrackingInfo(fullTrackingOrderNumbers.get(2),"WAITING"),
+                new TrackingInfo(fullTrackingOrderNumbers.get(3),"WAITING"));
         answer.addTracking(tracking);
         given( infoService.getInfo(answer)).willReturn(answer);
-        DeferredResult<AggregatedInfo> response = deferredService.getInfoDeferred(answer);
+        DeferredResult<AggregatedInfo> responseClient1 = deferredService.getInfoDeferred(answer);
         // now complete with the fifth
         List<String> secondOrderNumbers = List.of("5");
-        AggregatedInfo secondAnswer = new AggregatedInfo(emptyList(),secondOrderNumbers,emptyList());
-        List<TrackingInfo> oneTracking = List.of(new TrackingInfo("5","NEW"));
+        List<TrackingOrderNumber> fifthOrderNumber = TrackingInfo.fromListString(secondOrderNumbers);
+        AggregatedInfo secondAnswer = new AggregatedInfo(emptyList(),fifthOrderNumber,emptyList());
+        List<TrackingInfo> oneTracking = List.of(new TrackingInfo(fifthOrderNumber.getFirst(),"WAITING"));
         secondAnswer.addTracking(oneTracking);
         given( infoService.getInfo(secondAnswer)).willReturn(secondAnswer);
-        DeferredResult<AggregatedInfo> secondResponse = deferredService.getInfoDeferred(secondAnswer);
+        DeferredResult<AggregatedInfo> responseClient2 = deferredService.getInfoDeferred(secondAnswer);
         Thread.sleep(500);
-        AggregatedInfo secondInfo = (AggregatedInfo) secondResponse.getResult();
+        AggregatedInfo secondInfo = (AggregatedInfo) responseClient2.getResult();
         assertEquals(secondAnswer, secondInfo);
         // the first client should now have all data
-        assertEquals(mapper.writeValueAsString(fullAnswer), mapper.writeValueAsString(response.getResult()));
+        assertEquals(mapper.writeValueAsString(fullAnswer), mapper.writeValueAsString(responseClient1.getResult()));
     }
 
 }

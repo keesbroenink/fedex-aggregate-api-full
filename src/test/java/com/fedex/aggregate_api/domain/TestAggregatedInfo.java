@@ -14,8 +14,8 @@ public class TestAggregatedInfo {
         AggregatedInfo info = new AggregatedInfo();
         info.addPricing(List.of(new PricingInfo(new CountryCode("CN"),20.503467806384),
                         new PricingInfo(new CountryCode("NL"),null)));
-        info.addTracking(List.of(new TrackingInfo("117347282","COLLECTING"),
-                        new TrackingInfo("109347263","NEW")));
+        info.addTracking(List.of(new TrackingInfo(new TrackingOrderNumber("117347282"),"COLLECTING"),
+                        new TrackingInfo(new TrackingOrderNumber("109347263"),"NEW")));
         info.addShipments(List.of(new ShipmentInfo(new ShipmentOrderNumber("117347282"), List.of("box","pallet")),
                         new ShipmentInfo(new ShipmentOrderNumber("109347263"), List.of("box","box"))));
         String expected = "{\"pricing\":{\"CN\":20.503467806384,\"NL\":null},\"track\":{\"109347263\":\"NEW\",\"117347282\":\"COLLECTING\"},\"shipments\":{\"109347263\":[\"box\",\"box\"],\"117347282\":[\"box\",\"pallet\"]}}";

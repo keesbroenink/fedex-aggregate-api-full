@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fedex.aggregate_api.domain.AggregatedInfo;
 import com.fedex.aggregate_api.domain.AggregatedInfoDeferredService;
 import com.fedex.aggregate_api.domain.TrackingInfo;
+import com.fedex.aggregate_api.domain.TrackingOrderNumber;
 import jakarta.servlet.AsyncListener;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,10 +40,14 @@ public class TestRestAggregateApi {
     void testGetAggregatedInfoNoWait() throws Exception {
         // client with five requested items will get a response without waiting
         List<String> orderNumbers = List.of("1","2","3","4","5");
-        AggregatedInfo request = new AggregatedInfo(emptyList(), orderNumbers, emptyList());
-        List<TrackingInfo> tracking = List.of(new TrackingInfo("1","NEW"),
-                new TrackingInfo("2","NEW"),new TrackingInfo("3","NEW"),
-                new TrackingInfo("4","NEW"),new TrackingInfo("5","NEW"));
+        List<TrackingOrderNumber> fullTrackingOrderNumbers = TrackingInfo.fromListString(orderNumbers);
+        AggregatedInfo request = new AggregatedInfo(emptyList(), fullTrackingOrderNumbers, emptyList());
+        List<TrackingInfo> tracking = List.of(
+                new TrackingInfo(fullTrackingOrderNumbers.get(0),"WAITING"),
+                new TrackingInfo(fullTrackingOrderNumbers.get(1),"WAITING"),
+                new TrackingInfo(fullTrackingOrderNumbers.get(2),"WAITING"),
+                new TrackingInfo(fullTrackingOrderNumbers.get(3),"WAITING"),
+                new TrackingInfo(fullTrackingOrderNumbers.get(4),"WAITING"));
         request.addTracking(tracking);
         given( infoServiceDeferred.getInfoDeferred(any())).willReturn(buildMockDeferredResult(request));
 
@@ -60,10 +65,13 @@ public class TestRestAggregateApi {
     void testGetAggregatedInfoOnTimeout() throws Exception {
         // client with four requested items will not get a response without waiting
         List<String> orderNumbers = List.of("1","2","3","4");
-        AggregatedInfo request = new AggregatedInfo(emptyList(), orderNumbers, emptyList());
-        List<TrackingInfo> tracking = List.of(new TrackingInfo("1","NEW"),
-                new TrackingInfo("2","NEW"),new TrackingInfo("3","NEW"),
-                new TrackingInfo("4","NEW"));
+        List<TrackingOrderNumber> trackingOrderNumbers = TrackingInfo.fromListString(orderNumbers);
+        AggregatedInfo request = new AggregatedInfo(emptyList(), trackingOrderNumbers, emptyList());
+        List<TrackingInfo> tracking = List.of(
+                new TrackingInfo(trackingOrderNumbers.get(0),"NEW"),
+                new TrackingInfo(trackingOrderNumbers.get(1),"NEW"),
+                new TrackingInfo(trackingOrderNumbers.get(2),"NEW"),
+                new TrackingInfo(trackingOrderNumbers.get(3),"NEW"));
         request.addTracking(tracking);
         given( infoServiceDeferred.getInfoDeferred(any())).willReturn(buildTimeoutDeferredResult(1, request));
         MvcResult asyncResult = mvc

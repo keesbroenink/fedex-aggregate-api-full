@@ -52,7 +52,7 @@ public class TestFedexApiClient {
 
         Mono<List<TrackingInfo>> result = apiClient.getTrackingStatus(List.of(orderNumber));
         StepVerifier.create(result)
-                .expectNextMatches(genericInfoList -> genericInfoList.getFirst().orderNumber().equals(orderNumber)
+                .expectNextMatches(genericInfoList -> genericInfoList.getFirst().trackingOrderNumber().orderNumber().equals(orderNumber)
                                                    && genericInfoList.getFirst().status().equals(trackingStatus)    )
                 .verifyComplete();
     }
@@ -71,7 +71,7 @@ public class TestFedexApiClient {
 
         Mono<List<TrackingInfo>> result = apiClient.getTrackingStatus(List.of(orderNumber));
         StepVerifier.create(result)
-                .expectNextMatches(genericInfoList -> genericInfoList.getFirst().orderNumber().equals(orderNumber)
+                .expectNextMatches(genericInfoList -> genericInfoList.getFirst().trackingOrderNumber().orderNumber().equals(orderNumber)
                                   && genericInfoList.getFirst().status() == null    )
                 .verifyComplete();
     }

@@ -20,7 +20,7 @@ public class AggregatedInfo {
     @JsonIgnore
     public final List<CountryCode> pricingIso2CountryCodes = new CopyOnWriteArrayList<>();
     @JsonIgnore
-    public final List<String> trackOrderNumbers = new CopyOnWriteArrayList();
+    public final List<TrackingOrderNumber> trackOrderNumbers = new CopyOnWriteArrayList();
     @JsonIgnore
     public final List<ShipmentOrderNumber> shipmentsOrderNumbers = new CopyOnWriteArrayList();
 
@@ -28,7 +28,7 @@ public class AggregatedInfo {
     }
 
     public AggregatedInfo(List<CountryCode> pricingIso2CountryCodes,
-                          List<String> trackOrderNumbers,
+                          List<TrackingOrderNumber> trackOrderNumbers,
                           List<ShipmentOrderNumber> shipmentsOrderNumbers) {
         this.pricingIso2CountryCodes.addAll(pricingIso2CountryCodes);
         this.trackOrderNumbers.addAll(trackOrderNumbers);
@@ -39,6 +39,10 @@ public class AggregatedInfo {
         return this.pricingIso2CountryCodes.stream().map(c -> c.code()).toList();
     }
     @JsonIgnore
+    public List<String> getTrackingOrderNumbers() {
+        return this.trackOrderNumbers.stream().map(c -> c.orderNumber()).toList();
+    }
+    @JsonIgnore
     public List<String> getShipmentsOrderNumbers() {
         return this.shipmentsOrderNumbers.stream().map(c -> c.orderNumber()).toList();
     }
@@ -47,7 +51,7 @@ public class AggregatedInfo {
     }
 
     public synchronized void addTracking(List<TrackingInfo> trackingList) {
-        trackingList.forEach(entry -> track.put(entry.orderNumber(), entry.status()));
+        trackingList.forEach(entry -> track.put(entry.trackingOrderNumber().orderNumber(), entry.status()));
     }
 
     public synchronized void addShipments(List<ShipmentInfo> shippingList) {
@@ -69,7 +73,7 @@ public class AggregatedInfo {
      */
     public AggregatedInfo merge( AggregatedInfo data) {
         copyMapIfKeyInList(pricing, data.pricing, getPricingIso2CountryCodes());
-        copyMapIfKeyInList(track, data.track, trackOrderNumbers);
+        copyMapIfKeyInList(track, data.track, getTrackingOrderNumbers());
         copyMapIfKeyInList(shipments, data.shipments, getShipmentsOrderNumbers());
         return this;
     }
@@ -88,7 +92,7 @@ public class AggregatedInfo {
     public AggregatedInfo buildRequestNotResolved() {
         return new AggregatedInfo(
                 buildPricingListIfNoData(this.pricing, getPricingIso2CountryCodes()),
-                buildTrackingListIfNoData(this.track, this.trackOrderNumbers),
+                buildTrackingListIfNoData(this.track, getTrackingOrderNumbers()),
                 buildShipmentListIfNoData(this.shipments, getShipmentsOrderNumbers())
         );
     }
@@ -97,9 +101,9 @@ public class AggregatedInfo {
         list.stream().filter(key -> map.get(key) == null).forEach(key->result.add(new CountryCode(key)));
         return result;
     }
-    private List<String> buildTrackingListIfNoData(Map<?,?> map, List<String> list) {
-        List<String> result = new ArrayList();
-        list.stream().filter(key -> map.get(key) == null).forEach(result::add);
+    private List<TrackingOrderNumber> buildTrackingListIfNoData(Map<?,?> map, List<String> list) {
+        List<TrackingOrderNumber> result = new ArrayList();
+        list.stream().filter(key -> map.get(key) == null).forEach(key-> result.add(new TrackingOrderNumber(key)));
         return result;
     }
     private List<ShipmentOrderNumber> buildShipmentListIfNoData(Map<?,?> map, List<String> list) {
