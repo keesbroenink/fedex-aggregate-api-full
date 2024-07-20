@@ -19,9 +19,9 @@ public class TestAggregatedInfoService {
         FedexApi fedexApi = mock();
         AggregatedInfoService service = new AggregatedInfoService(fedexApi,5);
         AggregatedInfo info = service.getInfo(new AggregatedInfo(emptyList(), emptyList(), emptyList()));
-        assertEquals(emptyMap(),info.pricing);
-        assertEquals(emptyMap(),info.track);
-        assertEquals(emptyMap(),info.shipments);
+        assertEquals(emptyMap(),info.getPricing());
+        assertEquals(emptyMap(),info.getTrack());
+        assertEquals(emptyMap(),info.getShipments());
     }
 
     @Test
@@ -30,9 +30,9 @@ public class TestAggregatedInfoService {
         AggregatedInfoService service = new AggregatedInfoService(fedexApi,2);
         AggregatedInfo info = service.getInfo(new AggregatedInfo(List.of(new CountryCode("NL")),
                 List.of(new TrackingOrderNumber("1")), List.of(new ShipmentOrderNumber("2"))));
-        assertEquals(emptyMap(),info.pricing);
-        assertEquals(emptyMap(),info.track);
-        assertEquals(emptyMap(),info.shipments);
+        assertEquals(emptyMap(),info.getPricing());
+        assertEquals(emptyMap(),info.getTrack());
+        assertEquals(emptyMap(),info.getShipments());
     }
     @Test
     void testCacheEnoughRequests() {
@@ -43,8 +43,8 @@ public class TestAggregatedInfoService {
         given( fedexApi.getTrackingStatus(orderNumbers)).willReturn(answer);
         AggregatedInfoService service = new AggregatedInfoService(fedexApi,1);
         AggregatedInfo info = service.getInfo(new AggregatedInfo(emptyList(), trackingOrderNumbers, emptyList()));
-        assertEquals(emptyMap(),info.pricing);
-        assertEquals(emptyMap(),info.shipments);
-        assertEquals(Map.of("1","NEW"),info.track);
+        assertEquals(emptyMap(),info.getPricing());
+        assertEquals(emptyMap(),info.getShipments());
+        assertEquals(Map.of("1","NEW"),info.getTrack());
     }
 }

@@ -30,7 +30,8 @@ public class AggregatedInfoDeferredService {
 
     public DeferredResult<AggregatedInfo> getInfoDeferred(AggregatedInfo requestedInfo) {
         logger.info("getInfoDeferred() with timeout {} seconds for pricingIso2CountryCodes {}, trackOrderNumbers {}, shipmentsOrderNumbers {}",
-                timeoutSeconds, requestedInfo.pricingIso2CountryCodes, requestedInfo.trackOrderNumbers, requestedInfo.shipmentsOrderNumbers);
+                timeoutSeconds, requestedInfo.getPricingIso2CountryCodes(),
+                requestedInfo.getTrackingOrderNumbers(), requestedInfo.getShipmentsOrderNumbers());
         DeferredResult<AggregatedInfo> deferredResult = new DeferredResult(timeoutSeconds*1000,
                 () -> fedexApiListener.executeOnTimeout(requestedInfo));
         fedexApiListener.addRequest(requestedInfo, deferredResult);

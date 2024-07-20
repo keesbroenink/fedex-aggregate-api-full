@@ -47,13 +47,13 @@ public class TestAggregateInfoDeferredService {
         setup(2);
         List<String> orderNumbers = List.of("1","2","3","4","5");
         List<TrackingOrderNumber> trackingOrderNumbers = TrackingInfo.fromListString(orderNumbers);
-        AggregatedInfo answer = new AggregatedInfo(emptyList(),trackingOrderNumbers,emptyList());
+        AggregatedInfo answer = new AggregatedInfo(emptyList(),trackingOrderNumbers,emptyList(),true);
         List<TrackingInfo> tracking = List.of(
                 new TrackingInfo(trackingOrderNumbers.get(0),"DELIVERED"),
                 new TrackingInfo(trackingOrderNumbers.get(1),"DELIVERED"),
                 new TrackingInfo(trackingOrderNumbers.get(2),"DELIVERED"),
                 new TrackingInfo(trackingOrderNumbers.get(3),"DELIVERED"));
-        answer.addTrackingAlways(tracking);
+        answer.addTracking(tracking);
         given( infoService.getInfo(answer)).willReturn(answer);
         DeferredResult<AggregatedInfo> response = deferredService.getInfoDeferred(answer);
         Thread.sleep(500);

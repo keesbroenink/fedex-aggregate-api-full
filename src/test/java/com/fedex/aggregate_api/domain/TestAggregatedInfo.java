@@ -76,7 +76,7 @@ public class TestAggregatedInfo {
                 new PricingInfo(new CountryCode("NL"), null));
         info.addPricing(pricing);
         // we can only add if we have the key in there
-        AggregatedInfo expected = new AggregatedInfo();
+        AggregatedInfo expected = new AggregatedInfo(emptyList(),emptyList(),emptyList());
         assertEquals(mapper.writeValueAsString(expected), mapper.writeValueAsString(info));
 
         List<String> countryCodes = List.of("NL", "CN");

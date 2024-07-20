@@ -2,10 +2,7 @@ package com.fedex.aggregate_api.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.IntStream;
 
@@ -14,26 +11,51 @@ import java.util.stream.IntStream;
  * But it also holds the requested data id's (JsonIgnore).
  */
 public class AggregatedInfo {
-    public final Map<String, Double> pricing = new TreeMap<>();//not threadsafe
-    public final Map<String, String> track = new TreeMap<>();
-    public final Map<String, List<String>> shipments = new TreeMap<>();
     @JsonIgnore
-    public final List<CountryCode> pricingIso2CountryCodes = new CopyOnWriteArrayList<>();
+    private boolean allowDataNotRequested = false;
+    private final Map<String, Double> pricing = new TreeMap<>();//not threadsafe
+    private final Map<String, String> track = new TreeMap<>();
+    private final Map<String, List<String>> shipments = new TreeMap<>();
     @JsonIgnore
-    public final List<TrackingOrderNumber> trackOrderNumbers = new CopyOnWriteArrayList();
+    private final List<CountryCode> pricingIso2CountryCodes = new CopyOnWriteArrayList<>();
     @JsonIgnore
-    public final List<ShipmentOrderNumber> shipmentsOrderNumbers = new CopyOnWriteArrayList();
+    private final List<TrackingOrderNumber> trackOrderNumbers = new CopyOnWriteArrayList();
+    @JsonIgnore
+    private final List<ShipmentOrderNumber> shipmentsOrderNumbers = new CopyOnWriteArrayList();
 
-    public AggregatedInfo() {
-    }
-
+    /**
+     * Set up the object with the requested id's and specify if we allow to add data later
+     * that does not correspond to one of the id's. This is useful when we collect data
+     * that will be handed over to other AggregateInfo objects. See e.g. {@link AggregatedInfoService}.
+     * @param pricingIso2CountryCodes
+     * @param trackOrderNumbers
+     * @param shipmentsOrderNumbers
+     * @param allowDataNotRequested
+     */
     public AggregatedInfo(List<CountryCode> pricingIso2CountryCodes,
                           List<TrackingOrderNumber> trackOrderNumbers,
-                          List<ShipmentOrderNumber> shipmentsOrderNumbers) {
+                          List<ShipmentOrderNumber> shipmentsOrderNumbers,
+                          boolean allowDataNotRequested) {
         this.pricingIso2CountryCodes.addAll(pricingIso2CountryCodes);
         this.trackOrderNumbers.addAll(trackOrderNumbers);
         this.shipmentsOrderNumbers.addAll(shipmentsOrderNumbers);
+        this.allowDataNotRequested = allowDataNotRequested;
     }
+    public AggregatedInfo(List<CountryCode> pricingIso2CountryCodes,
+                          List<TrackingOrderNumber> trackOrderNumbers,
+                          List<ShipmentOrderNumber> shipmentsOrderNumbers) {
+        this(pricingIso2CountryCodes, trackOrderNumbers, shipmentsOrderNumbers, false);
+    }
+    public Map<String, Double> getPricing() {
+        return Collections.unmodifiableMap(pricing);
+    }
+    public Map<String, String> getTrack() {
+        return Collections.unmodifiableMap(track);
+    }
+    public Map<String, List<String>> getShipments() {
+        return Collections.unmodifiableMap(shipments);
+    }
+
     @JsonIgnore
     public List<String> getPricingIso2CountryCodes() {
         return this.pricingIso2CountryCodes.stream().map(c -> c.code()).toList();
@@ -47,33 +69,26 @@ public class AggregatedInfo {
         return this.shipmentsOrderNumbers.stream().map(c -> c.orderNumber()).toList();
     }
     public synchronized void addPricing(List<PricingInfo> pricingList) {
-        addPricingIfKeyInList(pricingList);
+        pricingList.stream().filter(e->checkInList(e.isoCountryCode())).forEach(entry -> pricing.put(entry.isoCountryCode().code(), entry.price()));
     }
-    public synchronized void addPricingAlways(List<PricingInfo> pricingList) {
-        pricingList.forEach(entry -> pricing.put(entry.isoCountryCode().code(), entry.price()));
+    private boolean checkInList(CountryCode countryCode) {
+        return allowDataNotRequested || pricingIso2CountryCodes.contains(countryCode);
     }
     public synchronized void addTracking(List<TrackingInfo> trackingList) {
-        addTrackingIfKeyInList(trackingList);
+        trackingList.stream().filter(e-> checkInList(e.trackingOrderNumber())).forEach(entry -> track.put(entry.trackingOrderNumber().orderNumber(), entry.status()));
     }
-    public synchronized void addTrackingAlways(List<TrackingInfo> trackingList) {
-        trackingList.forEach(entry -> track.put(entry.trackingOrderNumber().orderNumber(), entry.status()));
+    private boolean checkInList(TrackingOrderNumber trackingOrderNumber) {
+        return allowDataNotRequested || trackOrderNumbers.contains(trackingOrderNumber);
     }
 
     public synchronized void addShipments(List<ShipmentInfo> shippingList) {
-        addShipmentIfKeyInList(shippingList);
+        shippingList.stream().filter(e-> checkInList(e.shipmentOrderNumber())).forEach(entry -> shipments.put(entry.shipmentOrderNumber().orderNumber(), entry.shipments()));
     }
-    public synchronized void addShipmentsAlways(List<ShipmentInfo> shippingList) {
-        shippingList.forEach(entry -> shipments.put(entry.shipmentOrderNumber().orderNumber(), entry.shipments()));
+
+    private boolean checkInList(ShipmentOrderNumber shipmentOrderNumber) {
+        return allowDataNotRequested || shipmentsOrderNumbers.contains(shipmentOrderNumber);
     }
-    private void addPricingIfKeyInList(List<PricingInfo> orgList) {
-        orgList.stream().filter(e-> pricingIso2CountryCodes.contains(e.isoCountryCode())).forEach(entry -> pricing.put(entry.isoCountryCode().code(), entry.price()));
-    }
-    private void addTrackingIfKeyInList(List<TrackingInfo> orgList) {
-        orgList.stream().filter(e-> trackOrderNumbers.contains(e.trackingOrderNumber())).forEach(entry -> track.put(entry.trackingOrderNumber().orderNumber(), entry.status()));
-    }
-    private void addShipmentIfKeyInList(List<ShipmentInfo> orgList) {
-        orgList.stream().filter(e-> shipmentsOrderNumbers.contains(e.shipmentOrderNumber())).forEach(entry -> shipments.put(entry.shipmentOrderNumber().orderNumber(), entry.shipments()));
-    }
+
     @JsonIgnore
     public boolean isComplete() {
         return pricing.keySet().size() == pricingIso2CountryCodes.size() &&
@@ -104,12 +119,16 @@ public class AggregatedInfo {
      * Return a new AggregateInfo that only has request-ids that did not have data yet
      * @return
      */
-    public AggregatedInfo buildRequestNotResolved() {
+    public AggregatedInfo buildRequestNotResolved(boolean allowDataNotRequested) {
         return new AggregatedInfo(
                 buildPricingListIfNoData(this.pricing, getPricingIso2CountryCodes()),
                 buildTrackingListIfNoData(this.track, getTrackingOrderNumbers()),
-                buildShipmentListIfNoData(this.shipments, getShipmentsOrderNumbers())
+                buildShipmentListIfNoData(this.shipments, getShipmentsOrderNumbers()),
+                allowDataNotRequested
         );
+    }
+    public AggregatedInfo buildRequestNotResolved() {
+        return buildRequestNotResolved(false);
     }
     private List<CountryCode> buildPricingListIfNoData(Map<?,?> map, List<String> list) {
         List<CountryCode> result = new ArrayList();

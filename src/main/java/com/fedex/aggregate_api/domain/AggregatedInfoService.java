@@ -40,9 +40,9 @@ public class AggregatedInfoService {
         logger.info("getInfoInternal() minimalRequests {}, ignoreCache {}, pricingIso2CountryCodes {}, trackOrderNumbers {}, shipmentsOrderNumbers {}",
                 minimalRequests,
                 ignoreCache,
-                requestedInfo.pricingIso2CountryCodes,
-                requestedInfo.trackOrderNumbers,
-                requestedInfo.shipmentsOrderNumbers);
+                requestedInfo.getPricingIso2CountryCodes(),
+                requestedInfo.getTrackingOrderNumbers(),
+                requestedInfo.getShipmentsOrderNumbers());
 
         Mono<List<PricingInfo>> pricing = ignoreCache
                 ? callIgnoreCache( requestedInfo.getPricingIso2CountryCodes(),requestedInfo,
@@ -64,16 +64,17 @@ public class AggregatedInfoService {
                                fedexApi::getShipments);
 
         // set up a new AggregatedInfo as output of this function
-        AggregatedInfo result = new AggregatedInfo(requestedInfo.pricingIso2CountryCodes,
-                requestedInfo.trackOrderNumbers, requestedInfo.shipmentsOrderNumbers);
+        // and allow data be put in that is not requested so we can give
+        // this data to all http clients
+        AggregatedInfo result = requestedInfo.buildRequestNotResolved(true);
 
         // call in parallel
         return Mono
                 .zip( pricing, trackStatus, shipments)
                 .map( data -> {
-                    result.addPricingAlways(data.getT1());
-                    result.addTrackingAlways(data.getT2());
-                    result.addShipmentsAlways(data.getT3());
+                    result.addPricing(data.getT1());
+                    result.addTracking(data.getT2());
+                    result.addShipments(data.getT3());
                     return result;
                 })
                 .block();
