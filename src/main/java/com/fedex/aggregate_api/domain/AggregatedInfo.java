@@ -12,7 +12,7 @@ import java.util.stream.IntStream;
  */
 public class AggregatedInfo {
     @JsonIgnore
-    private boolean allowDataNotRequested = false;
+    private boolean allowDataNotRequested;
     private final Map<String, Double> pricing = new TreeMap<>();//not threadsafe
     private final Map<String, String> track = new TreeMap<>();
     private final Map<String, List<String>> shipments = new TreeMap<>();
@@ -58,15 +58,15 @@ public class AggregatedInfo {
 
     @JsonIgnore
     public List<String> getPricingIso2CountryCodes() {
-        return this.pricingIso2CountryCodes.stream().map(c -> c.code()).toList();
+        return this.pricingIso2CountryCodes.stream().map(CountryCode::code).toList();
     }
     @JsonIgnore
     public List<String> getTrackingOrderNumbers() {
-        return this.trackOrderNumbers.stream().map(c -> c.orderNumber()).toList();
+        return this.trackOrderNumbers.stream().map(TrackingOrderNumber::orderNumber).toList();
     }
     @JsonIgnore
     public List<String> getShipmentsOrderNumbers() {
-        return this.shipmentsOrderNumbers.stream().map(c -> c.orderNumber()).toList();
+        return this.shipmentsOrderNumbers.stream().map(ShipmentOrderNumber::orderNumber).toList();
     }
     public synchronized void addPricing(List<PricingInfo> pricingList) {
         pricingList.stream().filter(e->checkInList(e.isoCountryCode())).forEach(entry -> pricing.put(entry.isoCountryCode().code(), entry.price()));

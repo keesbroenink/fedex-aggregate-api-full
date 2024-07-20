@@ -8,6 +8,8 @@ import java.util.List;
 
 import static java.util.Collections.emptyList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 public class TestAggregatedInfo {
     ObjectMapper mapper = new ObjectMapper();
     @Test
@@ -66,7 +68,7 @@ public class TestAggregatedInfo {
         expected.addPricing(pricing2);
 
         assertEquals(mapper.writeValueAsString(expected), mapper.writeValueAsString(info3));
-        assertEquals(true, info3.isComplete());
+        assertTrue(info3.isComplete());
     }
 
     @Test

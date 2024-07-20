@@ -45,19 +45,19 @@ public class AggregatedInfoService {
                 requestedInfo.getShipmentsOrderNumbers());
 
         Mono<List<PricingInfo>> pricing = ignoreCache
-                ? callIgnoreCache( requestedInfo.getPricingIso2CountryCodes(),requestedInfo,
+                ? callIgnoreCache( requestedInfo.getPricingIso2CountryCodes(),
                                    fedexApi::getPricing)
                 : callOrCache( pricingIso2CountryCodesCache,
                                requestedInfo.getPricingIso2CountryCodes(),
                                fedexApi::getPricing);
         Mono<List<TrackingInfo>> trackStatus = ignoreCache
-                ? callIgnoreCache( requestedInfo.getTrackingOrderNumbers(),requestedInfo,
+                ? callIgnoreCache( requestedInfo.getTrackingOrderNumbers(),
                                    fedexApi::getTrackingStatus)
                 : callOrCache( trackOrderNumbersCache,
                                requestedInfo.getTrackingOrderNumbers(),
                                fedexApi::getTrackingStatus);
         Mono<List<ShipmentInfo>> shipments = ignoreCache
-                ? callIgnoreCache( requestedInfo.getShipmentsOrderNumbers(),requestedInfo,
+                ? callIgnoreCache( requestedInfo.getShipmentsOrderNumbers(),
                                    fedexApi::getShipments)
                 : callOrCache( shipmentsOrderNumbersCache,
                                requestedInfo.getShipmentsOrderNumbers(),
@@ -95,10 +95,10 @@ public class AggregatedInfoService {
         return result;
     }
 
-    private <T> Mono<List<T>> callIgnoreCache(List<String> keys, AggregatedInfo requestInfo,
+    private <T> Mono<List<T>> callIgnoreCache(List<String> keys,
                                               Function<List<String>, Mono<List<T>>> theCall) {
         // chunk the list
-        if (keys.size() == 0) return Mono.just(emptyList());
+        if (keys.isEmpty()) return Mono.just(emptyList());
 
         List<List<String>> chunks = AggregatedInfo.buildChunks(keys, minimalRequests);
         if (chunks.size() == 1) {
