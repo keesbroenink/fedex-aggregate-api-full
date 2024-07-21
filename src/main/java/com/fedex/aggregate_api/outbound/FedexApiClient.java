@@ -46,7 +46,7 @@ public class FedexApiClient implements FedexApi {
         return getPricingInfo(iso2CountryCodes).flatMap(
                 genericInfoList -> Mono.just(genericInfoList.stream()
                         .map(e -> new PricingInfo(new CountryCode(e.code()), (Double) e.data()))
-                        .collect(Collectors.toList())));
+                        .toList()));
     }
 
     @Override
@@ -55,7 +55,7 @@ public class FedexApiClient implements FedexApi {
         return getTrackingStatusInfo(orderNumbers).flatMap(
                 genericInfoList -> Mono.just(genericInfoList.stream()
                         .map(e -> new TrackingInfo(new TrackingOrderNumber(e.code()), (String) e.data()))
-                        .collect(Collectors.toList())));
+                        .toList()));
     }
 
     @Override
@@ -64,7 +64,7 @@ public class FedexApiClient implements FedexApi {
         return getShipmentInfo(orderNumbers).flatMap(
                 genericInfoList -> Mono.just(genericInfoList.stream()
                         .map(e -> new ShipmentInfo(new ShipmentOrderNumber(e.code()), (List<String>) e.data()))
-                        .collect(Collectors.toList())));
+                        .toList()));
     }
 
     private Mono<List<GenericInfo>> getPricingInfo(List<String> iso2CountryCodes) {
