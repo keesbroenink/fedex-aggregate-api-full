@@ -13,19 +13,20 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 public class TestAggregateInfoDeferredService {
-    AggregatedInfoService infoService = mock();
+
     AggregatedInfoDeferredService deferredService;
-    FedexApiListener listener;
     ObjectMapper mapper = new ObjectMapper();
 
-    private void setup(int timeoutSeconds) {
-        listener = new FedexApiListener(infoService);
+    private AggregatedInfoService setup(int timeoutSeconds) {
+        AggregatedInfoService infoService = mock();
+        FedexApiListener listener = new FedexApiListener(infoService);
         deferredService = new AggregatedInfoDeferredService(listener, timeoutSeconds);
+        return infoService;
     }
 
     @Test
     void testGetAggregatedInfoNoWait() throws InterruptedException {
-        setup(2);
+        AggregatedInfoService infoService = setup(2);
         List<String> orderNumbers = List.of("1","2","3","4","5");
         List<TrackingOrderNumber> trackingOrderNumbers = TrackingInfo.fromListString(orderNumbers);
         AggregatedInfo answer = new AggregatedInfo(emptyList(),trackingOrderNumbers,emptyList());
@@ -44,7 +45,7 @@ public class TestAggregateInfoDeferredService {
     }
     @Test
     void testGetAggregatedInfoWait() throws InterruptedException {
-        setup(2);
+        AggregatedInfoService infoService = setup(2);
         List<String> orderNumbers = List.of("1","2","3","4","5");
         List<TrackingOrderNumber> trackingOrderNumbers = TrackingInfo.fromListString(orderNumbers);
         AggregatedInfo answer = new AggregatedInfo(emptyList(),trackingOrderNumbers,emptyList(),true);
@@ -63,8 +64,7 @@ public class TestAggregateInfoDeferredService {
 
     @Test
     void testGetAggregatedInfoTwoClientsComplete() throws InterruptedException, JsonProcessingException {
-        setup(2);
-
+        AggregatedInfoService infoService = setup(2);
         List<String> orderNumbers = List.of("1","2","3","4","5");
         List<TrackingOrderNumber> fullTrackingOrderNumbers = TrackingInfo.fromListString(orderNumbers);
         AggregatedInfo fullAnswer = new AggregatedInfo(emptyList(),fullTrackingOrderNumbers,emptyList());
