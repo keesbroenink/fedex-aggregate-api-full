@@ -2,7 +2,10 @@ package com.fedex.aggregate_api.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.IntStream;
 

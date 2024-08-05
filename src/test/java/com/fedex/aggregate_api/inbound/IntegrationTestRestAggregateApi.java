@@ -12,7 +12,6 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockAsyncContext;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.web.context.request.async.DeferredResult;
 
 import java.util.List;
 
