@@ -12,7 +12,7 @@ import java.util.stream.IntStream;
  */
 public class AggregatedInfo {
     @JsonIgnore
-    private boolean allowDataNotRequested;
+    private final boolean allowDataNotRequested;
     private final Map<String, Double> pricing = new TreeMap<>();//not threadsafe
     private final Map<String, String> track = new TreeMap<>();
     private final Map<String, List<String>> shipments = new TreeMap<>();
@@ -69,31 +69,33 @@ public class AggregatedInfo {
         return this.shipmentsOrderNumbers.stream().map(ShipmentOrderNumber::orderNumber).toList();
     }
     public synchronized void addPricing(List<PricingInfo> pricingList) {
-        pricingList.stream().filter(e->checkInList(e.isoCountryCode())).forEach(entry -> pricing.put(entry.isoCountryCode().code(), entry.price()));
+        pricingList.stream()
+                .filter(e->checkInList(getPricingIso2CountryCodes(), e.isoCountryCode().code()))
+                .forEach(entry -> pricing.put(entry.isoCountryCode().code(), entry.price()));
     }
-    private boolean checkInList(CountryCode countryCode) {
-        return allowDataNotRequested || pricingIso2CountryCodes.contains(countryCode);
+    private boolean checkInList(List<String> list, String id) {
+        return allowDataNotRequested || list.contains(id);
     }
     public synchronized void addTracking(List<TrackingInfo> trackingList) {
-        trackingList.stream().filter(e-> checkInList(e.trackingOrderNumber())).forEach(entry -> track.put(entry.trackingOrderNumber().orderNumber(), entry.status()));
-    }
-    private boolean checkInList(TrackingOrderNumber trackingOrderNumber) {
-        return allowDataNotRequested || trackOrderNumbers.contains(trackingOrderNumber);
+        trackingList.stream()
+                .filter(e-> checkInList(getTrackingOrderNumbers(),e.trackingOrderNumber().orderNumber()))
+                .forEach(entry -> track.put(entry.trackingOrderNumber().orderNumber(), entry.status()));
     }
 
     public synchronized void addShipments(List<ShipmentInfo> shippingList) {
-        shippingList.stream().filter(e-> checkInList(e.shipmentOrderNumber())).forEach(entry -> shipments.put(entry.shipmentOrderNumber().orderNumber(), entry.shipments()));
-    }
-
-    private boolean checkInList(ShipmentOrderNumber shipmentOrderNumber) {
-        return allowDataNotRequested || shipmentsOrderNumbers.contains(shipmentOrderNumber);
+        shippingList.stream()
+                .filter(e-> checkInList(getShipmentsOrderNumbers(), e.shipmentOrderNumber().orderNumber()))
+                .forEach(entry -> shipments.put(entry.shipmentOrderNumber().orderNumber(), entry.shipments()));
     }
 
     @JsonIgnore
+    /**
+     * Check if we have retrieved data (could be null data) for all requested id's
+     */
     public boolean isComplete() {
-        return pricing.keySet().size() == pricingIso2CountryCodes.size() &&
-                track.keySet().size() == trackOrderNumbers.size() &&
-                shipments.keySet().size() == shipmentsOrderNumbers.size();
+        return pricing.keySet().containsAll(getPricingIso2CountryCodes()) &&
+                track.keySet().containsAll(getTrackingOrderNumbers()) &&
+                shipments.keySet().containsAll(getShipmentsOrderNumbers());
     }
 
     /**
@@ -130,20 +132,14 @@ public class AggregatedInfo {
     public AggregatedInfo buildRequestNotResolved() {
         return buildRequestNotResolved(false);
     }
-    private List<CountryCode> buildPricingListIfNoData(Map<?,?> map, List<String> list) {
-        List<CountryCode> result = new ArrayList();
-        list.stream().filter(key -> !map.containsKey(key)).forEach(key->result.add(new CountryCode(key)));
-        return result;
+    private List<CountryCode> buildPricingListIfNoData(Map<String,?> map, List<String> list) {
+        return list.stream().filter(key -> !map.containsKey(key)).map(CountryCode::new).toList();
     }
-    private List<TrackingOrderNumber> buildTrackingListIfNoData(Map<?,?> map, List<String> list) {
-        List<TrackingOrderNumber> result = new ArrayList();
-        list.stream().filter(key -> map.get(key) == null).forEach(key-> result.add(new TrackingOrderNumber(key)));
-        return result;
+    private List<TrackingOrderNumber> buildTrackingListIfNoData(Map<String,?> map, List<String> list) {
+        return list.stream().filter(key -> !map.containsKey(key)).map(TrackingOrderNumber::new).toList();
     }
     private List<ShipmentOrderNumber> buildShipmentListIfNoData(Map<?,?> map, List<String> list) {
-        List<ShipmentOrderNumber> result = new ArrayList();
-        list.stream().filter(key -> map.get(key) == null).forEach(key-> result.add(new ShipmentOrderNumber(key)));
-        return result;
+        return list.stream().filter(key -> !map.containsKey(key)).map(ShipmentOrderNumber::new).toList();
     }
     public static List<List<String>> buildChunks(List<String> keys, int chunkSize) {
         return IntStream.range(0, keys.size())
@@ -152,8 +148,9 @@ public class AggregatedInfo {
                 .toList();
     }
 
-    // we are using this object as key in a Map, so we must define what makes this map unique
-    // for our purpose the default Java implementation is the right choice; every instance will be unique
+    // We are using this object as key in a Map, so we must define what makes this object unique.
+    // For our purpose the default Java implementation is the right choice; every instance will be unique
+    // so no special implementation of equals and hashCode.
 
     @Override
     public String toString() {
