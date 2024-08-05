@@ -112,8 +112,7 @@ public class AggregatedInfo {
 
     private <K,V> void copyMapIfKeyInList(Map<K,V> orgMap, Map<K,V> map, List<K> list) {
         map.keySet().stream().filter(list::contains).forEach(key -> {
-            V val = map.get(key);
-            orgMap.put(key, val);
+            orgMap.put(key, map.get(key));
         });
     }
 
@@ -152,17 +151,17 @@ public class AggregatedInfo {
     // For our purpose the default Java implementation is the right choice; every instance will be unique
     // so no special implementation of equals and hashCode.
 
+
     @Override
     public String toString() {
         return "AggregatedInfo{" +
-                "pricingIso2CountryCodes=" + pricingIso2CountryCodes +
-                ", trackOrderNumbers=" + trackOrderNumbers +
-                ", shipmentsOrderNumbers=" + shipmentsOrderNumbers +
+                "allowDataNotRequested=" + allowDataNotRequested +
                 ", pricing=" + pricing +
                 ", track=" + track +
                 ", shipments=" + shipments +
+                ", pricingIso2CountryCodes=" + pricingIso2CountryCodes +
+                ", trackOrderNumbers=" + trackOrderNumbers +
+                ", shipmentsOrderNumbers=" + shipmentsOrderNumbers +
                 '}';
     }
-
-
 }
