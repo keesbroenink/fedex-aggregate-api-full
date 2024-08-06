@@ -103,7 +103,7 @@ public class AggregatedInfo {
 
     /**
      * We merge the data in the maps but only if the supplied data corresponds with a request-id
-     * that is also in the original.
+     * that is also in the original list of request-id's.
      * @param data
      */
     public AggregatedInfo merge( AggregatedInfo data) {

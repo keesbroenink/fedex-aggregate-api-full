@@ -30,12 +30,6 @@ public class IntegrationTestRestAggregateApi {
     @Autowired
     MockMvc mvc;
 
-    @Autowired
-    RestAggregateApi api;
-
-//    @Autowired
-//    AggregatedInfoDeferredService infoServiceDeferred;
-
     @MockBean
     FedexApiListener fedexApiListener;
 

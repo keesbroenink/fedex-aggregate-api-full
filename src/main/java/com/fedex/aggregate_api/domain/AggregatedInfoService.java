@@ -97,9 +97,9 @@ public class AggregatedInfoService {
 
     private <T> Mono<List<T>> callIgnoreCache(List<String> keys,
                                               Function<List<String>, Mono<List<T>>> theCall) {
-        // chunk the list
         if (keys.isEmpty()) return Mono.just(emptyList());
 
+        // chunk the list
         List<List<String>> chunks = AggregatedInfo.buildChunks(keys, minimalRequests);
         if (chunks.size() == 1) {
             return theCall.apply(keys);
