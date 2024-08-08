@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -101,16 +102,15 @@ public class AggregatedInfoService {
 
         // chunk the list
         List<List<String>> chunks = AggregatedInfo.buildChunks(keys, minimalRequests);
+        logger.info("callIgnoreCache(), number of chunks {}", chunks.size());
         if (chunks.size() == 1) {
             return theCall.apply(keys);
         }
+
         List<T> result = new ArrayList<>();
+        List<Mono<List<T>>> publishers = chunks.stream().map(chunk -> theCall.apply(chunk)).toList();
         return Mono
-                .zip( theCall.apply(getChunk(0, chunks)), theCall.apply(getChunk(1, chunks)),
-                      theCall.apply(getChunk(2, chunks)), theCall.apply(getChunk(3, chunks)),
-                      theCall.apply(getChunk(4, chunks)), theCall.apply(getChunk(5, chunks)),
-                      theCall.apply(getChunk(6, chunks)), theCall.apply(getChunk(7, chunks))
-                )
+                .zip(publishers, objectArray-> Arrays.stream(objectArray).toList())
                 .map(data -> {
                     for (int i = 0; i < chunks.size(); i++) {
                         result.addAll((Collection<? extends T>) data.get(i));
@@ -118,10 +118,7 @@ public class AggregatedInfoService {
                     return result;
                 });
     }
-    private List<String> getChunk(int index, List<List<String>> chunks) {
-        if (index >= chunks.size()) return emptyList();
-        return chunks.get(index);
-    }
+
     public AggregatedInfo getInfoNoLimit(AggregatedInfo requestedInfo) {
         return getInfoInternal(requestedInfo, true);
     }
